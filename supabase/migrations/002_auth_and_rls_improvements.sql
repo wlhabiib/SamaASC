@@ -26,6 +26,11 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 -- Enable RLS on users
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
+-- Drop old policies if they exist
+DROP POLICY IF EXISTS "Users: Allow users to read their own profile" ON users;
+DROP POLICY IF EXISTS "Users: Allow admins to read team member profiles" ON users;
+DROP POLICY IF EXISTS "Users: Allow users to update their own profile" ON users;
+
 -- RLS Policies for users
 CREATE POLICY "Users: Allow users to read their own profile"
   ON users FOR SELECT
@@ -59,6 +64,8 @@ CREATE POLICY "Users: Allow users to update their own profile"
 -- ============================================
 
 -- Add updated_at trigger to team_members if not exists
+DROP FUNCTION IF EXISTS update_team_members_updated_at() CASCADE;
+
 CREATE OR REPLACE FUNCTION update_team_members_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -76,6 +83,9 @@ CREATE TRIGGER team_members_updated_at_trigger
 -- ============================================
 -- FONCTION RPC SÉCURISÉE : CREATE_TEAM_WITH_ADMIN
 -- ============================================
+
+-- Drop existing function if it exists
+DROP FUNCTION IF EXISTS create_team_with_admin(TEXT, TEXT, TEXT, TEXT, TEXT) CASCADE;
 
 CREATE OR REPLACE FUNCTION create_team_with_admin(
   p_team_name TEXT,
@@ -152,6 +162,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- FONCTION RPC SÉCURISÉE : GET_USER_TEAM_INFO
 -- ============================================
 
+-- Drop existing function if it exists
+DROP FUNCTION IF EXISTS get_user_team_info() CASCADE;
+
 CREATE OR REPLACE FUNCTION get_user_team_info()
 RETURNS jsonb AS $$
 DECLARE
@@ -193,6 +206,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ============================================
 -- FONCTION RPC SÉCURISÉE : ADD_TEAM_MEMBER
 -- ============================================
+
+-- Drop existing function if it exists
+DROP FUNCTION IF EXISTS add_team_member(UUID, TEXT, TEXT, TEXT, TEXT) CASCADE;
 
 CREATE OR REPLACE FUNCTION add_team_member(
   p_team_id UUID,
@@ -257,8 +273,17 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ============================================
 
 -- Drop old policies and recreate improved ones for team_members
-
 DROP POLICY IF EXISTS "Team_members: Allow read access to team members" ON team_members;
+DROP POLICY IF EXISTS "Team_members: Allow insert for team owners" ON team_members;
+DROP POLICY IF EXISTS "Team_members: Allow update for team owners and admins" ON team_members;
+DROP POLICY IF EXISTS "Team_members: Allow delete for team owners" ON team_members;
+
+DROP POLICY IF EXISTS "Players: Allow read access to team members" ON players;
+DROP POLICY IF EXISTS "Players: Allow insert for team owners and admins" ON players;
+DROP POLICY IF EXISTS "Players: Allow update for team owners and admins" ON players;
+DROP POLICY IF EXISTS "Players: Allow delete for team owners and admins" ON players;
+
+-- Recreate team_members policies
 CREATE POLICY "Team_members: Allow read access to team members"
   ON team_members FOR SELECT
   TO authenticated
