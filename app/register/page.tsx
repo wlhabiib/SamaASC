@@ -97,6 +97,30 @@ export default function RegisterPage() {
         return;
       }
 
+      // Update team_members with the real Supabase Auth user ID via API
+      const realUserId = authData.user?.id;
+      if (realUserId && result.team_id) {
+        console.log('Calling API to update team_members with real user ID:', realUserId);
+        const { error: updateApiError } = await (
+          await fetch('/api/auth/update-user-id', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              team_id: result.team_id,
+              temp_user_id: result.user_id,
+              real_user_id: realUserId,
+            }),
+          })
+        ).json();
+
+        if (updateApiError) {
+          console.error('Error updating team_members via API:', updateApiError);
+          // Don't fail - continue anyway
+        } else {
+          console.log('Successfully updated team_members via API');
+        }
+      }
+
       setSuccess(true);
       
       // Redirect to login page after a moment

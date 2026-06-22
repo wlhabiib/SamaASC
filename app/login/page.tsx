@@ -91,7 +91,11 @@ export default function LoginPage() {
 
       console.log('Connexion réussie pour utilisateur:', data.user.id);
 
-      // Redirect to home after successful login
+      // Wait a moment for the auth state to propagate before redirecting
+      // This ensures the context has time to fetch team_members data
+      console.log('Attente de synchronisation du contexte...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       console.log('Redirection vers /');
       router.push('/');
     } catch (err) {

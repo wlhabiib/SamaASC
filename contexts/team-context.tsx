@@ -78,13 +78,42 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
       // Récupérer les informations de l'utilisateur depuis Supabase
       console.log('Récupération des informations team_members pour user_id:', session.user.id);
-      const { data: teamMember, error: memberError } = await supabase
+      let { data: teamMember, error: memberError } = await supabase
         .from('team_members')
         .select('*')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
       console.log('Résultat team_members:', { teamMember, memberError });
+
+      // Fallback: If not found by user_id, try searching by email
+      // (This can happen if the user_id hasn't been updated yet from the placeholder)
+      if (!teamMember && session.user.email) {
+        console.log('Team member not found by user_id, trying by email:', session.user.email);
+        const { data: teamMemberByEmail, error: emailError } = await supabase
+          .from('team_members')
+          .select('*')
+          .eq('email', session.user.email)
+          .maybeSingle();
+
+        if (!emailError && teamMemberByEmail) {
+          console.log('Team member found by email, updating user_id...');
+          teamMember = teamMemberByEmail;
+          
+          // Update the user_id to the correct Supabase Auth ID
+          const { error: updateError } = await supabase
+            .from('team_members')
+            .update({ user_id: session.user.id })
+            .eq('id', teamMember.id);
+
+          if (updateError) {
+            console.error('Error updating team_member user_id:', updateError);
+          } else {
+            console.log('Successfully updated team_member user_id');
+            teamMember = { ...teamMember, user_id: session.user.id };
+          }
+        }
+      }
 
       if (memberError || !teamMember) {
         console.error('Error fetching team member:', memberError);
