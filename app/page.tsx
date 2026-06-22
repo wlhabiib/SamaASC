@@ -120,36 +120,6 @@ export default function AccueilPage() {
     }
   }, [team, contextLoading]);
 
-    // Setup realtime subscriptions - DISABLED (Supabase removed)
-    // if (team && supabase) {
-    //   const channels: any[] = [];
-    //   const tables = ['announcements', 'matches', 'players', 'gallery'];
-
-    //   tables.forEach(table => {
-    //     const channel = supabase!
-    //       .channel(`${table}-changes`)
-    //       .on(
-    //         'postgres_changes',
-    //         {
-    //           event: '*',
-    //           schema: 'public',
-    //           table: table,
-    //           filter: `team_id=eq.${team.id}`,
-    //         },
-    //         () => {
-    //           load();
-    //         }
-    //       )
-    //       .subscribe();
-    //     channels.push(channel);
-    //   });
-
-    //   return () => {
-    //     channels.forEach(channel => supabase!.removeChannel(channel));
-    //   };
-    // }
-  }, [team]);
-
   if (loading || contextLoading) {
     return (
       <AppShell>
