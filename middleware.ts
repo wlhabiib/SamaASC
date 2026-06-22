@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
+  // Skip API routes - they should handle their own auth
+  if (req.nextUrl.pathname.startsWith('/api/')) {
+    return NextResponse.next()
+  }
+
   const res = NextResponse.next()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
