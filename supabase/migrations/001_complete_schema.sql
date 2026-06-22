@@ -13,7 +13,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Table teams
 CREATE TABLE IF NOT EXISTS teams (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  clerk_organization_id TEXT UNIQUE,
+  organization_id TEXT UNIQUE,
   name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   domain TEXT NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS teams (
 CREATE TABLE IF NOT EXISTS team_members (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
-  clerk_user_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
   email TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS team_members (
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(clerk_user_id, team_id)
+  UNIQUE(user_id, team_id)
 );
 
 -- Table players
@@ -184,13 +184,13 @@ CREATE TABLE IF NOT EXISTS competitions (
 -- ============================================
 
 -- Indexes for teams
-CREATE INDEX IF NOT EXISTS idx_teams_clerk_organization_id ON teams(clerk_organization_id);
+CREATE INDEX IF NOT EXISTS idx_teams_organization_id ON teams(organization_id);
 CREATE INDEX IF NOT EXISTS idx_teams_slug ON teams(slug);
 CREATE INDEX IF NOT EXISTS idx_teams_domain ON teams(domain);
 
 -- Indexes for team_members
 CREATE INDEX IF NOT EXISTS idx_team_members_team_id ON team_members(team_id);
-CREATE INDEX IF NOT EXISTS idx_team_members_clerk_user_id ON team_members(clerk_user_id);
+CREATE INDEX IF NOT EXISTS idx_team_members_user_id ON team_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_team_members_email ON team_members(email);
 CREATE INDEX IF NOT EXISTS idx_team_members_role ON team_members(role);
 
@@ -272,7 +272,7 @@ CREATE POLICY "Teams: Allow insert for team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = teams.id
-      AND team_members.clerk_user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -285,7 +285,7 @@ CREATE POLICY "Teams: Allow update for team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = teams.id
-      AND team_members.clerk_user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -298,7 +298,7 @@ CREATE POLICY "Teams: Allow delete for team owners"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = teams.id
-      AND team_members.clerk_user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role = 'owner'
     )
   );
@@ -877,7 +877,7 @@ BEGIN
   v_user_id := uuid_generate_v4();
   
   -- Create the team member (admin)
-  INSERT INTO team_members (team_id, clerk_user_id, email, first_name, last_name, role, is_active)
+  INSERT INTO team_members (team_id, user_id, email, first_name, last_name, role, is_active)
   VALUES (v_team_id, v_user_id, p_admin_email, 'Admin', p_team_name, 'owner', true);
   
   -- Return the result
@@ -915,7 +915,7 @@ BEGIN
     tm.role as user_role
   FROM team_members tm
   JOIN teams t ON t.id = tm.team_id
-  WHERE tm.clerk_user_id = p_user_id
+  WHERE tm.user_id = p_user_id
   AND tm.is_active = true;
 END;
 $$;
