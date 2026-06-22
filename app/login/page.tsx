@@ -60,6 +60,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleLogin appelé');
     setLoading(true);
     setError('');
 
@@ -91,6 +92,7 @@ export default function LoginPage() {
       console.log('Connexion réussie pour utilisateur:', data.user.id);
 
       // Redirect to home after successful login
+      console.log('Redirection vers /');
       router.push('/');
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
