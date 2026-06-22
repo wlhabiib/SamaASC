@@ -97,11 +97,12 @@ export default function LoginPage() {
 
       // Wait for the context to fully sync before redirecting
       // This ensures team_members data is fetched
-      console.log('⏳ Attente de synchronisation complète du contexte... (3 secondes)');
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      console.log('⏳ Attente de synchronisation complète du contexte... (2 secondes)');
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      console.log('🚀 Redirection vers /');
-      router.push('/');
+      console.log('🚀 Redirection vers / avec rechargement');
+      // Force a page reload to ensure server-side session is synced
+      window.location.href = '/';
       setLoading(false);
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
