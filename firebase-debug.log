@@ -1,0 +1,16 @@
+[debug] [2026-06-19T00:57:10.259Z] ----------------------------------------------------------------------
+[debug] [2026-06-19T00:57:10.268Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\AIDARA MOUHAMED\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js login
+[debug] [2026-06-19T00:57:10.269Z] CLI Version:   15.12.0
+[debug] [2026-06-19T00:57:10.270Z] Platform:      win32
+[debug] [2026-06-19T00:57:10.270Z] Node Version:  v24.13.1
+[debug] [2026-06-19T00:57:10.270Z] Time:          Fri Jun 19 2026 00:57:10 GMT+0000 (heure moyenne de Greenwich)
+[debug] [2026-06-19T00:57:10.271Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-19T00:57:10.279Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[info] Already logged in as medconnect092@gmail.com
+[debug] [2026-06-19T00:57:16.871Z] Error: Timed out.
+    at Timeout._onTimeout (C:\Users\AIDARA MOUHAMED\AppData\Roaming\npm\node_modules\firebase-tools\lib\utils.js:309:49)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[error] 
+[error] Error: An unexpected error has occurred.
