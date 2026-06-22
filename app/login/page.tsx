@@ -122,7 +122,7 @@ export default function LoginPage() {
       await supabase.auth.refreshSession();
       console.log('✅ Session refresh complétée');
 
-      // Wait for cookies to sync on server
+      // Wait for session sync
       console.log('⏳ Attente de synchronisation de la session...');
       await supabase.auth.refreshSession();
       console.log('✅ Session refresh complétée');
@@ -138,16 +138,27 @@ export default function LoginPage() {
       }
       
       console.log('✅ Session fraîche obtenue:', freshSession.user.id);
-      console.log('✅ Access token:', freshSession.access_token.substring(0, 50) + '...');
       
-      // Pass the access token in Authorization header for middleware to use
-      const token = freshSession.access_token;
-      console.log('🚀 Redirection vers / avec token Authorization...');
+      // Send token to server to set cookies
+      console.log('🚀 Envoi du token au serveur pour cookie sync...');
+      const cookieRes = await fetch('/api/auth/redirect-home', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: freshSession.access_token }),
+      });
       
-      // Use router.replace with Authorization header
-      // Note: We can't directly set headers from client-side router.push, 
-      // so the middleware will check cookies + handle the normal flow
-      router.replace('/');
+      if (!cookieRes.ok) {
+        console.error('❌ Cookie set failed:', cookieRes.status);
+        setError('Erreur de synchronisation');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('✅ Cookies synchronisés au serveur');
+      console.log('🚀 Redirection vers /...');
+      
+      // Use window.location for a full page reload that will trigger middleware
+      window.location.href = '/';
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
       setError('Erreur lors de la connexion');
