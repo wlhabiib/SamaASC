@@ -139,7 +139,25 @@ export default function LoginPage() {
       
       console.log('✅ Session fraîche obtenue:', freshSession.user.id);
       
-      // Sync session to server-side cookies
+      // Store session in localStorage for client-side Supabase to find
+      console.log('💾 Stockage de la session dans localStorage...');
+      const sessionData = {
+        access_token: freshSession.access_token,
+        refresh_token: freshSession.refresh_token,
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: freshSession.user,
+      };
+      
+      // Store for Supabase Auth SDK
+      localStorage.setItem(
+        `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1].split('.')[0]}-auth-token`,
+        JSON.stringify(sessionData)
+      );
+      console.log('✅ Session stockée dans localStorage');
+      
+      // Also sync session to server-side cookies
       console.log('🔐 Synchronisation de la session avec les cookies HTTP...');
       try {
         const syncResponse = await fetch('/api/auth/sync', {
@@ -162,8 +180,6 @@ export default function LoginPage() {
 
       // Now redirect to home
       console.log('✅ Redirection vers accueil...');
-      // Wait a bit for cookies to be set
-      await new Promise(resolve => setTimeout(resolve, 1000));
       window.location.href = '/';
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);

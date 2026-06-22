@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import { User } from '@supabase/supabase-js';
 
 interface Team {
@@ -48,7 +48,33 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create Supabase client with localStorage for session persistence
+const supabase = createBrowserClient(
+  supabaseUrl,
+  supabaseAnonKey,
+  {
+    auth: {
+      persistSession: true,
+      storageKey: 'supabase.auth.token',
+      storage: {
+        getItem: (key: string) => {
+          if (typeof window === 'undefined') return null
+          return localStorage.getItem(key)
+        },
+        setItem: (key: string, value: string) => {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(key, value)
+          }
+        },
+        removeItem: (key: string) => {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(key)
+          }
+        },
+      },
+    },
+  }
+);
 
 export function TeamProvider({ children }: { children: ReactNode }) {
   const [team, setTeam] = useState<Team | null>(null);
