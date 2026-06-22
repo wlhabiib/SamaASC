@@ -64,23 +64,31 @@ export default function LoginPage() {
     setError('');
 
     try {
+      console.log('Tentative de connexion avec:', email);
+      
       // Sign in with Supabase Auth
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
 
+      console.log('Réponse Supabase Auth:', { data, authError });
+
       if (authError) {
+        console.error('Erreur d\'authentification:', authError);
         setError('Identifiants incorrects');
         setLoading(false);
         return;
       }
 
       if (!data.user) {
+        console.error('Aucun utilisateur retourné');
         setError('Erreur lors de la connexion');
         setLoading(false);
         return;
       }
+
+      console.log('Connexion réussie pour utilisateur:', data.user.id);
 
       // Redirect to home after successful login
       router.push('/');
