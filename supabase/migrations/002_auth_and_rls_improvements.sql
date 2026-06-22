@@ -143,17 +143,17 @@ BEGIN
       'slug', v_slug,
       'message', 'Team created successfully'
     );
-
-  EXCEPTION WHEN unique_violation THEN
-    RETURN jsonb_build_object(
-      'success', false,
-      'error', 'Team slug or domain already exists'
-    );
-  EXCEPTION WHEN OTHERS THEN
-    RETURN jsonb_build_object(
-      'success', false,
-      'error', SQLERRM
-    );
+  EXCEPTION
+    WHEN unique_violation THEN
+      RETURN jsonb_build_object(
+        'success', false,
+        'error', 'Team slug or domain already exists'
+      );
+    WHEN OTHERS THEN
+      RETURN jsonb_build_object(
+        'success', false,
+        'error', SQLERRM
+      );
   END;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -254,17 +254,17 @@ BEGIN
     'team_member_id', v_team_member_id,
     'message', 'Team member added successfully'
   );
-
-EXCEPTION WHEN unique_violation THEN
-  RETURN jsonb_build_object(
-    'success', false,
-    'error', 'User is already a member of this team'
-  );
-EXCEPTION WHEN OTHERS THEN
-  RETURN jsonb_build_object(
-    'success', false,
-    'error', SQLERRM
-  );
+EXCEPTION
+  WHEN unique_violation THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'User is already a member of this team'
+    );
+  WHEN OTHERS THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', SQLERRM
+    );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
