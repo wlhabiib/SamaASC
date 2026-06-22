@@ -49,24 +49,23 @@ export default function RegisterPage() {
         return;
       }
 
-      const adminUsername = adminEmail.split('@')[0];
-
-      // Call the create-team API route instead of RPC directly
-      console.log('Calling create-team API route...');
-      const teamResponse = await fetch('/api/auth/create-team', {
+      // Call the complete team creation endpoint
+      console.log('📝 Calling create-complete-team API...');
+      const teamResponse = await fetch('/api/auth/create-complete-team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           team_name: teamName,
           team_domain: domain,
           admin_email: adminEmail,
-          admin_username: adminUsername,
+          admin_first_name: adminEmail.split('@')[0],
+          admin_password: adminPassword,
         }),
       });
 
       if (!teamResponse.ok) {
         const errorText = await teamResponse.text();
-        console.error('Team creation API error:', { status: teamResponse.status, body: errorText });
+        console.error('❌ Team creation API error:', { status: teamResponse.status, body: errorText });
         
         try {
           const errorJson = JSON.parse(errorText);
@@ -77,69 +76,14 @@ export default function RegisterPage() {
       }
 
       const result = await teamResponse.json();
-      console.log('Team creation result:', result);
+      console.log('✅ Team creation result:', result);
 
       if (result.error) {
         throw new Error(result.error);
       }
 
-      if (!result.team_id || !result.user_id) {
-        throw new Error('Failed to create team or user');
-      }
-
-      // Sign up user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: adminEmail,
-        password: adminPassword,
-        options: {
-          data: {
-            user_id: result.user_id,
-            team_id: result.team_id,
-            username: adminUsername,
-          }
-        }
-      });
-
-      if (authError) {
-        console.error('Auth error:', authError);
-        setError('Erreur lors de la création du compte: ' + authError.message);
-        setLoading(false);
-        return;
-      }
-
-      console.log('✅ Supabase Auth user created:', authData.user?.id);
-      console.log('Placeholder user_id was:', result.user_id);
-
-      // Update team_members with the real Supabase Auth user ID via API
-      const realUserId = authData.user?.id;
-      if (realUserId && result.team_id) {
-        console.log('🔄 Calling API to update team_members with real user ID:', realUserId);
-        try {
-          const updateResponse = await fetch('/api/auth/update-user-id', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              team_id: result.team_id,
-              temp_user_id: result.user_id,
-              real_user_id: realUserId,
-            }),
-          });
-
-          if (!updateResponse.ok) {
-            const errorText = await updateResponse.text();
-            console.error('❌ Update API error response:', {
-              status: updateResponse.status,
-              statusText: updateResponse.statusText,
-              body: errorText,
-            });
-          } else {
-            const updateData = await updateResponse.json();
-            console.log('✅ Successfully updated team_members via API:', updateData);
-          }
-        } catch (apiError) {
-          console.error('❌ Error calling update-user-id API:', apiError);
-          // Don't fail - continue anyway
-        }
+      if (!result.success || !result.team_id || !result.user_id) {
+        throw new Error('Erreur lors de la création de l\'équipe ou de l\'utilisateur');
       }
 
       // Store credentials for display

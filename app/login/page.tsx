@@ -139,26 +139,27 @@ export default function LoginPage() {
       
       console.log('✅ Session fraîche obtenue:', freshSession.user.id);
       
-      // Send token to server to set cookies
-      console.log('🚀 Envoi du token au serveur pour cookie sync...');
-      const cookieRes = await fetch('/api/auth/redirect-home', {
+      // Send token to server which will handle redirect with cookies
+      console.log('🚀 Envoi au serveur d\'authentification...');
+      
+      // Don't await - let the redirect happen naturally
+      fetch('/api/auth/redirect-home', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken: freshSession.access_token }),
+        body: JSON.stringify({ 
+          accessToken: freshSession.access_token,
+          refreshToken: freshSession.refresh_token 
+        }),
+        redirect: 'follow', // Follow the 303 redirect
+      }).then(() => {
+        // If fetch completes, also try direct navigation as fallback
+        console.log('✅ Redirection effectuée');
+        window.location.href = '/';
+      }).catch(err => {
+        console.error('❌ Fetch error:', err);
+        // Fallback to direct navigation
+        window.location.href = '/';
       });
-      
-      if (!cookieRes.ok) {
-        console.error('❌ Cookie set failed:', cookieRes.status);
-        setError('Erreur de synchronisation');
-        setLoading(false);
-        return;
-      }
-      
-      console.log('✅ Cookies synchronisés au serveur');
-      console.log('🚀 Redirection vers /...');
-      
-      // Use window.location for a full page reload that will trigger middleware
-      window.location.href = '/';
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
       setError('Erreur lors de la connexion');
