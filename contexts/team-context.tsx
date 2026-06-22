@@ -133,13 +133,11 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           .eq('id', teamMember.team_id)
           .maybeSingle();
 
-        console.log('📊 Résultat teams:', { found: !!teamData, error: teamError?.message });
-
         if (teamError || !teamData) {
-          console.error('❌ Error fetching team:', teamError?.message);
+          console.error('❌ Erreur récupération team:', teamError?.message || 'Team non trouvée');
           setTeam(null);
         } else {
-          console.log('✅ Team trouvée:', teamData.name);
+          console.log('✅ Team trouvée et chargée:', teamData.name);
           setTeam(teamData as Team);
         }
       }
