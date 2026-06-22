@@ -311,7 +311,7 @@ CREATE POLICY "Team_members: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members tm
       WHERE tm.team_id = team_members.team_id
-      AND tm.user_id = auth.uid()
+      AND tm.user_id = auth.uid()::text
     )
   );
 
@@ -322,7 +322,7 @@ CREATE POLICY "Team_members: Allow insert for team owners"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = team_members.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role = 'owner'
     )
   );
@@ -334,7 +334,7 @@ CREATE POLICY "Team_members: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = team_members.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -346,7 +346,7 @@ CREATE POLICY "Team_members: Allow delete for team owners"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = team_members.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role = 'owner'
     )
   );
@@ -359,7 +359,7 @@ CREATE POLICY "Players: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = players.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -370,7 +370,7 @@ CREATE POLICY "Players: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = players.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -382,7 +382,7 @@ CREATE POLICY "Players: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = players.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -394,7 +394,7 @@ CREATE POLICY "Players: Allow delete for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = players.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -407,7 +407,7 @@ CREATE POLICY "Matches: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = matches.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -418,7 +418,7 @@ CREATE POLICY "Matches: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = matches.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -430,7 +430,7 @@ CREATE POLICY "Matches: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = matches.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -442,7 +442,7 @@ CREATE POLICY "Matches: Allow delete for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = matches.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -455,7 +455,7 @@ CREATE POLICY "Match_lineup: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = match_lineup.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -466,7 +466,7 @@ CREATE POLICY "Match_lineup: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = match_lineup.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -478,7 +478,7 @@ CREATE POLICY "Match_lineup: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = match_lineup.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -490,7 +490,7 @@ CREATE POLICY "Match_lineup: Allow delete for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = match_lineup.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -503,7 +503,7 @@ CREATE POLICY "Announcements: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = announcements.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -514,7 +514,7 @@ CREATE POLICY "Announcements: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = announcements.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -526,7 +526,7 @@ CREATE POLICY "Announcements: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = announcements.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -538,7 +538,7 @@ CREATE POLICY "Announcements: Allow delete for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = announcements.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -551,7 +551,7 @@ CREATE POLICY "Gallery: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = gallery.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -562,7 +562,7 @@ CREATE POLICY "Gallery: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = gallery.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -574,7 +574,7 @@ CREATE POLICY "Gallery: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = gallery.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -586,7 +586,7 @@ CREATE POLICY "Gallery: Allow delete for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = gallery.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -599,7 +599,7 @@ CREATE POLICY "Standings: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = standings.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -610,7 +610,7 @@ CREATE POLICY "Standings: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = standings.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -622,7 +622,7 @@ CREATE POLICY "Standings: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = standings.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -634,7 +634,7 @@ CREATE POLICY "Standings: Allow delete for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = standings.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -647,7 +647,7 @@ CREATE POLICY "Supporters: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = supporters.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -658,7 +658,7 @@ CREATE POLICY "Supporters: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = supporters.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -670,7 +670,7 @@ CREATE POLICY "Supporters: Allow delete for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = supporters.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -683,7 +683,7 @@ CREATE POLICY "Coach: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = coach.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -694,7 +694,7 @@ CREATE POLICY "Coach: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = coach.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -706,7 +706,7 @@ CREATE POLICY "Coach: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = coach.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -718,7 +718,7 @@ CREATE POLICY "Coach: Allow delete for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = coach.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -731,7 +731,7 @@ CREATE POLICY "Player_stats: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = player_stats.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -742,7 +742,7 @@ CREATE POLICY "Player_stats: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = player_stats.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -754,7 +754,7 @@ CREATE POLICY "Player_stats: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = player_stats.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -767,7 +767,7 @@ CREATE POLICY "Competitions: Allow read access to team members"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = competitions.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
     )
   );
 
@@ -778,7 +778,7 @@ CREATE POLICY "Competitions: Allow insert for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = competitions.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -790,7 +790,7 @@ CREATE POLICY "Competitions: Allow update for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = competitions.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
@@ -802,7 +802,7 @@ CREATE POLICY "Competitions: Allow delete for team owners and admins"
     EXISTS (
       SELECT 1 FROM team_members
       WHERE team_members.team_id = competitions.team_id
-      AND team_members.user_id = auth.uid()
+      AND team_members.user_id = auth.uid()::text
       AND team_members.role IN ('owner', 'admin')
     )
   );
