@@ -149,7 +149,7 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={(e) => { console.log('Formulaire soumis'); handleLogin(e); }} className="space-y-6">
             <div>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#22D3EE]" size={20} />
