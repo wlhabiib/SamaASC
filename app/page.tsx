@@ -45,22 +45,35 @@ export default function AccueilPage() {
 
   useEffect(() => {
     // Check authentication
+    console.log('Vérification de l\'authentification sur la page d\'accueil');
+    console.log('contextLoading:', contextLoading);
+    console.log('team:', team);
+    console.log('user:', user);
+    
     if (!contextLoading) {
       if (!team) {
+        console.log('Pas de team, redirection vers /login');
         router.push('/login');
         return;
       }
       if (!user) {
+        console.log('Pas d\'user, redirection vers /user-login');
         router.push('/user-login');
         return;
       }
+      console.log('Authentification OK, chargement des données');
     }
   }, [team, user, contextLoading, router]);
 
   useEffect(() => {
     async function load() {
-      if (!team) return;
+      console.log('Début du chargement des données');
+      if (!team) {
+        console.log('Pas de team, annulation du chargement');
+        return;
+      }
       
+      console.log('Chargement des données pour team_id:', team.id);
       const [ann, m, p, g, u] = await Promise.all([
         fetch(`/api/data/announcements?team_id=${team.id}`).then(r => r.json()),
         fetch(`/api/data/matches?team_id=${team.id}`).then(r => r.json()),
@@ -68,6 +81,7 @@ export default function AccueilPage() {
         fetch(`/api/data/gallery?team_id=${team.id}`).then(r => r.json()).catch(() => []),
         fetch(`/api/data/users?team_id=${team.id}`).then(r => r.json()).catch(() => []),
       ]);
+      console.log('Données chargées:', { ann, m, p, g, u });
       setAnnouncements(ann);
       setAllMatches(m);
       setPlayers(p);
@@ -77,6 +91,7 @@ export default function AccueilPage() {
       // Sort by date and show only the closest one
       const sorted = upcoming.sort((a: Match, b: Match) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
       setUpcomingMatches(sorted.slice(0, 1));
+      console.log('Fin du chargement des données');
       setLoading(false);
     }
     load();
