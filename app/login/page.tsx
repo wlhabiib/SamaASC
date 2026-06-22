@@ -60,7 +60,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleLogin appelé');
+    console.log('🔐 handleLogin appelé - FORMULAIRE SOUMIS');
     setLoading(true);
     setError('');
 
@@ -112,6 +112,15 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+  
+  // Expose login function globally for testing
+  useEffect(() => {
+    (window as any).testLogin = () => {
+      console.log('🧪 TEST: Calling handleLogin directly with form data:', { email, password });
+      const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+      handleLogin(fakeEvent);
+    };
+  }, [email, password]);
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
