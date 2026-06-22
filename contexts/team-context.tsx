@@ -84,19 +84,21 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      console.log('Résultat team_members:', { teamMember, memberError });
+      console.log('Résultat team_members par user_id:', { found: !!teamMember, error: memberError?.message });
 
       // Fallback: If not found by user_id, try searching by email
       // (This can happen if the user_id hasn't been updated yet from the placeholder)
       if (!teamMember && session.user.email) {
-        console.log('Team member not found by user_id, trying by email:', session.user.email);
+        console.log('Team member not found by user_id, trying fallback by email:', session.user.email);
         const { data: teamMemberByEmail, error: emailError } = await supabase
           .from('team_members')
           .select('*')
           .eq('email', session.user.email)
           .maybeSingle();
 
-        if (!emailError && teamMemberByEmail) {
+        console.log('Résultat team_members par email:', { found: !!teamMemberByEmail, error: emailError?.message });
+
+        if (teamMemberByEmail) {
           console.log('Team member found by email, updating user_id...');
           teamMember = teamMemberByEmail;
           
@@ -107,7 +109,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
             .eq('id', teamMember.id);
 
           if (updateError) {
-            console.error('Error updating team_member user_id:', updateError);
+            console.error('Error updating team_member user_id:', updateError.message);
           } else {
             console.log('Successfully updated team_member user_id');
             teamMember = { ...teamMember, user_id: session.user.id };
@@ -115,8 +117,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (memberError || !teamMember) {
-        console.error('Error fetching team member:', memberError);
+      if (!teamMember) {
+        console.log('No team member found for user:', session.user.id);
         setTeam(null);
         setTeamUser(null);
       } else {
@@ -131,10 +133,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           .eq('id', teamMember.team_id)
           .maybeSingle();
 
-        console.log('Résultat teams:', { teamData, teamError });
+        console.log('Résultat teams:', { found: !!teamData, error: teamError?.message });
 
         if (teamError || !teamData) {
-          console.error('Error fetching team:', teamError);
+          console.error('Error fetching team:', teamError?.message);
           setTeam(null);
         } else {
           console.log('Team trouvée:', teamData);

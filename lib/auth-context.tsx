@@ -57,10 +57,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      console.log('Résultat team_members:', { teamMember, error });
+      console.log('Résultat team_members:', { teamMember, error: error?.message });
 
-      if (error || !teamMember) {
-        console.error('Error fetching user info:', error);
+      if (!teamMember) {
+        console.log('Team member not found for user_id:', session.user.id);
         setUserRole(null);
         setTeamId(null);
       } else {
