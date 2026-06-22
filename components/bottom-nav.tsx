@@ -25,7 +25,7 @@ export default function BottomNav() {
 
   const filteredNavItems = NAV_ITEMS.filter(item => {
     if (item.adminOnly) {
-      return userRole === 'admin';
+      return userRole === 'admin' || userRole === 'owner';
     }
     return true;
   });

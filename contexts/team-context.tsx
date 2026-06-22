@@ -195,11 +195,20 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setTeam(null);
-    setTeamUser(null);
-    setCurrentUser(null);
-    window.location.href = '/login';
+    try {
+      await supabase.auth.signOut();
+      setTeam(null);
+      setTeamUser(null);
+      setCurrentUser(null);
+      // Nettoyer localStorage
+      localStorage.removeItem('supabase.auth.token');
+      // Redirection forcée
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      // Même en cas d'erreur, forcer la redirection
+      window.location.href = '/login';
+    }
   };
 
   return (
