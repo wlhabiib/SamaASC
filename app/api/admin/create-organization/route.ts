@@ -4,26 +4,49 @@ import { createAdminSupabaseClient } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
-    const { name, slug, userId } = await req.json();
+    const { name, slug, userId, createAdmin } = await req.json();
 
-    if (!name || !slug || !userId) {
+    if (!name || !slug) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Créer l'organisation dans Clerk
     const clerk = await clerkClient();
+    const supabase = createAdminSupabaseClient();
+
+    let adminEmail: string | null = null;
+    let adminPassword: string | null = null;
+    let createdUserId: string | null = userId || null;
+
+    // Si createAdmin est true, créer l'utilisateur admin automatiquement
+    if (createAdmin) {
+      // Générer l'email admin
+      adminEmail = `admin@${slug}.com`;
+      
+      // Générer un mot de passe sécurisé
+      adminPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase();
+
+      // Créer l'utilisateur dans Clerk
+      const user = await clerk.users.createUser({
+        emailAddress: [adminEmail],
+        password: adminPassword,
+        firstName: 'Admin',
+        lastName: name,
+      });
+
+      createdUserId = user.id;
+    }
+
+    // Créer l'organisation dans Clerk
     const organization = await clerk.organizations.createOrganization({
       name: name,
       slug: slug,
-      createdBy: userId,
+      createdBy: createdUserId || undefined,
     });
 
     // Créer l'équipe dans Supabase
-    const supabase = createAdminSupabaseClient();
-
     const { data: team, error: teamError } = await supabase
       .from('teams')
       .insert({
@@ -43,34 +66,51 @@ export async function POST(req: Request) {
     }
 
     // Ajouter l'utilisateur comme owner de l'équipe dans Supabase
-    const user = await clerk.users.getUser(userId);
-    const email = user.emailAddresses[0]?.emailAddress;
-    const firstName = user.firstName;
-    const lastName = user.lastName;
+    if (createdUserId) {
+      let email = adminEmail;
+      let firstName = 'Admin';
+      let lastName = name;
 
-    const { error: memberError } = await supabase.from('team_members').insert({
-      team_id: team.id,
-      clerk_user_id: userId,
-      email: email,
-      first_name: firstName || null,
-      last_name: lastName || null,
-      role: 'owner',
-      is_active: true,
-    });
+      // Si userId est fourni (cas où l'utilisateur est déjà connecté), récupérer ses infos
+      if (userId && !createAdmin) {
+        const user = await clerk.users.getUser(userId);
+        email = user.emailAddresses[0]?.emailAddress || email;
+        firstName = user.firstName || firstName;
+        lastName = user.lastName || lastName;
+      }
 
-    if (memberError) {
-      console.error('Error creating team member in Supabase:', memberError);
-      return NextResponse.json(
-        { error: 'Error creating team member in Supabase' },
-        { status: 500 }
-      );
+      const { error: memberError } = await supabase.from('team_members').insert({
+        team_id: team.id,
+        clerk_user_id: createdUserId,
+        email: email,
+        first_name: firstName || null,
+        last_name: lastName || null,
+        role: 'owner',
+        is_active: true,
+      });
+
+      if (memberError) {
+        console.error('Error creating team member in Supabase:', memberError);
+        return NextResponse.json(
+          { error: 'Error creating team member in Supabase' },
+          { status: 500 }
+        );
+      }
     }
 
-    return NextResponse.json({
+    const response: any = {
       success: true,
       organization: organization,
       team: team,
-    });
+    };
+
+    // Si createAdmin est true, retourner les identifiants admin
+    if (createAdmin && adminEmail && adminPassword) {
+      response.adminEmail = adminEmail;
+      response.adminPassword = adminPassword;
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error creating organization:', error);
     return NextResponse.json(

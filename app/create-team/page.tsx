@@ -14,6 +14,7 @@ export default function CreateTeamPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [adminCredentials, setAdminCredentials] = useState<{ email: string; password: string } | null>(null);
 
   // Générer automatiquement le slug à partir du nom
   const handleTeamNameChange = (value: string) => {
@@ -31,20 +32,14 @@ export default function CreateTeamPage() {
     setError('');
 
     try {
-      if (!userId) {
-        setError('Vous devez être connecté pour créer une équipe');
-        setLoading(false);
-        return;
-      }
-
-      // Créer l'organisation dans Clerk
+      // Créer l'organisation et l'utilisateur admin
       const response = await fetch('/api/admin/create-organization', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: teamName,
           slug: slug,
-          userId: userId,
+          createAdmin: true,
         }),
       });
 
@@ -54,12 +49,11 @@ export default function CreateTeamPage() {
       }
 
       const data = await response.json();
+      setAdminCredentials({
+        email: data.adminEmail,
+        password: data.adminPassword,
+      });
       setSuccess(true);
-
-      // Rediriger vers le tableau de bord après 2 secondes
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
     } catch (err) {
       console.error('Erreur lors de la création de l\'équipe:', err);
       setError('Erreur lors de la création de l\'équipe: ' + (err as Error).message);
@@ -76,7 +70,31 @@ export default function CreateTeamPage() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Équipe créée avec succès !</h2>
           <p className="text-gray-600">Votre équipe {teamName} a été créée</p>
-          <p className="text-sm text-gray-500 mt-2">Redirection en cours...</p>
+          
+          {adminCredentials && (
+            <div className="mt-6 bg-gray-50 rounded-xl p-4 text-left">
+              <h3 className="font-semibold text-gray-900 mb-3">Identifiants administrateur</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-500">Email</label>
+                  <p className="text-sm font-medium text-gray-900">{adminCredentials.email}</p>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Mot de passe</label>
+                  <p className="text-sm font-medium text-gray-900">{adminCredentials.password}</p>
+                </div>
+              </div>
+              <p className="text-xs text-red-500 mt-3">⚠️ Sauvegardez ces identifiants, ils ne seront plus affichés.</p>
+            </div>
+          )}
+          
+          <button
+            onClick={() => router.push('/user-login')}
+            className="mt-6 w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+          >
+            Se connecter avec ces identifiants
+            <ArrowRight size={20} />
+          </button>
         </div>
       </div>
     );
