@@ -23,6 +23,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [createdEmail, setCreatedEmail] = useState('');
+  const [createdPassword, setCreatedPassword] = useState('');
 
   const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9.-]/g, '');
@@ -105,10 +107,13 @@ export default function RegisterPage() {
         return;
       }
 
+      console.log('✅ Supabase Auth user created:', authData.user?.id);
+      console.log('Placeholder user_id was:', result.user_id);
+
       // Update team_members with the real Supabase Auth user ID via API
       const realUserId = authData.user?.id;
       if (realUserId && result.team_id) {
-        console.log('Calling API to update team_members with real user ID:', realUserId);
+        console.log('🔄 Calling API to update team_members with real user ID:', realUserId);
         try {
           const updateResponse = await fetch('/api/auth/update-user-id', {
             method: 'POST',
@@ -122,27 +127,35 @@ export default function RegisterPage() {
 
           if (!updateResponse.ok) {
             const errorText = await updateResponse.text();
-            console.error('API error response:', {
+            console.error('❌ Update API error response:', {
               status: updateResponse.status,
               statusText: updateResponse.statusText,
               body: errorText,
             });
           } else {
             const updateData = await updateResponse.json();
-            console.log('Successfully updated team_members via API:', updateData);
+            console.log('✅ Successfully updated team_members via API:', updateData);
           }
         } catch (apiError) {
-          console.error('Error calling update-user-id API:', apiError);
+          console.error('❌ Error calling update-user-id API:', apiError);
           // Don't fail - continue anyway
         }
       }
 
+      // Store credentials for display
+      console.log('✅ Registration complete!');
+      console.log('Email:', adminEmail);
+      console.log('Password:', adminPassword);
+      setCreatedEmail(adminEmail);
+      setCreatedPassword(adminPassword);
+
       setSuccess(true);
       
-      // Redirect to login page after a moment
+      // Redirect to login page after 3 seconds
       setTimeout(() => {
+        console.log('Redirecting to login...');
         router.push('/login');
-      }, 2000);
+      }, 3000);
     } catch (err) {
       console.error('Erreur lors de la création de l\'équipe:', err);
       setError('Erreur lors de la création de l\'équipe: ' + (err as Error).message);
@@ -157,9 +170,28 @@ export default function RegisterPage() {
           <div className="w-20 h-20 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
             <Check size={40} className="text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Équipe créée avec succès !</h2>
-          <p className="text-gray-600">Votre compte admin a été créé</p>
-          <p className="text-gray-500 text-sm mt-2">Connexion automatique et redirection...</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Équipe créée avec succès ! ✅</h2>
+          <p className="text-gray-600 mb-6">Votre compte admin a été créé</p>
+          
+          {/* Credentials Display */}
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 text-left">
+            <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">Identifiants Admin</p>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Email:</p>
+                <p className="font-mono bg-white border border-gray-300 rounded p-2 text-sm text-gray-900 break-all">{createdEmail}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Mot de passe:</p>
+                <p className="font-mono bg-white border border-gray-300 rounded p-2 text-sm text-gray-900 break-all">{createdPassword}</p>
+              </div>
+            </div>
+            <p className="text-xs text-amber-600 mt-3 bg-amber-50 p-2 rounded">
+              ⚠️ Sauvegardez ces identifiants! Vous en aurez besoin pour vous connecter.
+            </p>
+          </div>
+          
+          <p className="text-gray-500 text-sm mt-2">Redirection vers la connexion...</p>
         </div>
       </div>
     );

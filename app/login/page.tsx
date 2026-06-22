@@ -65,7 +65,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      console.log('Tentative de connexion avec:', email);
+      console.log('🔐 Tentative de connexion avec email:', email);
       
       // Sign in with Supabase Auth
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -73,30 +73,30 @@ export default function LoginPage() {
         password: password,
       });
 
-      console.log('Réponse Supabase Auth:', { data, authError });
+      console.log('📱 Réponse Supabase Auth:', { userId: data?.user?.id, hasError: !!authError });
 
       if (authError) {
-        console.error('Erreur d\'authentification:', authError);
-        setError('Identifiants incorrects');
+        console.error('❌ Erreur d\'authentification:', authError.message);
+        setError('Identifiants incorrects ou compte non activé. Message: ' + authError.message);
         setLoading(false);
         return;
       }
 
       if (!data.user) {
-        console.error('Aucun utilisateur retourné');
+        console.error('❌ Aucun utilisateur retourné');
         setError('Erreur lors de la connexion');
         setLoading(false);
         return;
       }
 
-      console.log('Connexion réussie pour utilisateur:', data.user.id);
+      console.log('✅ Connexion réussie pour utilisateur:', data.user.id);
 
       // Wait a moment for the auth state to propagate before redirecting
       // This ensures the context has time to fetch team_members data
-      console.log('Attente de synchronisation du contexte...');
+      console.log('⏳ Attente de synchronisation du contexte...');
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      console.log('Redirection vers /');
+      console.log('🚀 Redirection vers /');
       router.push('/');
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
