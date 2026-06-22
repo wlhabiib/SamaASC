@@ -139,27 +139,32 @@ export default function LoginPage() {
       
       console.log('✅ Session fraîche obtenue:', freshSession.user.id);
       
-      // Send token to server which will handle redirect with cookies
-      console.log('🚀 Envoi au serveur d\'authentification...');
-      
-      // Don't await - let the redirect happen naturally
-      fetch('/api/auth/redirect-home', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          accessToken: freshSession.access_token,
-          refreshToken: freshSession.refresh_token 
-        }),
-        redirect: 'follow', // Follow the 303 redirect
-      }).then(() => {
-        // If fetch completes, also try direct navigation as fallback
-        console.log('✅ Redirection effectuée');
-        window.location.href = '/';
-      }).catch(err => {
-        console.error('❌ Fetch error:', err);
-        // Fallback to direct navigation
-        window.location.href = '/';
-      });
+      // Sync session to server-side cookies
+      console.log('🔐 Synchronisation de la session avec les cookies HTTP...');
+      try {
+        const syncResponse = await fetch('/api/auth/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            access_token: freshSession.access_token,
+            refresh_token: freshSession.refresh_token 
+          }),
+        });
+
+        if (!syncResponse.ok) {
+          console.warn('⚠️ Sync failed:', await syncResponse.text());
+        } else {
+          console.log('✅ Session synchronisée aux cookies');
+        }
+      } catch (syncErr) {
+        console.error('❌ Sync error:', syncErr);
+      }
+
+      // Now redirect to home
+      console.log('✅ Redirection vers accueil...');
+      // Wait a bit for cookies to be set
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      window.location.href = '/';
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
       setError('Erreur lors de la connexion');
