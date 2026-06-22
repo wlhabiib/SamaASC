@@ -59,10 +59,13 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const refreshTeam = async () => {
     try {
       setLoading(true);
+      console.log('Début de refreshTeam');
       
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('Session:', session);
       
       if (!session?.user) {
+        console.log('Aucune session utilisateur');
         setTeam(null);
         setTeamUser(null);
         setCurrentUser(null);
@@ -71,32 +74,41 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       }
 
       setCurrentUser(session.user);
+      console.log('Utilisateur authentifié:', session.user.id);
 
       // Récupérer les informations de l'utilisateur depuis Supabase
+      console.log('Récupération des informations team_members pour user_id:', session.user.id);
       const { data: teamMember, error: memberError } = await supabase
         .from('team_members')
         .select('*')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
+      console.log('Résultat team_members:', { teamMember, memberError });
+
       if (memberError || !teamMember) {
         console.error('Error fetching team member:', memberError);
         setTeam(null);
         setTeamUser(null);
       } else {
+        console.log('Team member trouvé:', teamMember);
         setTeamUser(teamMember as TeamUser);
 
         // Récupérer les informations de l'équipe depuis Supabase
+        console.log('Récupération des informations teams pour team_id:', teamMember.team_id);
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
           .select('*')
           .eq('id', teamMember.team_id)
           .maybeSingle();
 
+        console.log('Résultat teams:', { teamData, teamError });
+
         if (teamError || !teamData) {
           console.error('Error fetching team:', teamError);
           setTeam(null);
         } else {
+          console.log('Team trouvée:', teamData);
           setTeam(teamData as Team);
         }
       }
@@ -105,6 +117,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       setTeam(null);
       setTeamUser(null);
     } finally {
+      console.log('Fin de refreshTeam');
       setLoading(false);
     }
   };

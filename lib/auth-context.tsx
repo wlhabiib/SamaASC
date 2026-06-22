@@ -32,10 +32,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const refreshUserInfo = async () => {
     try {
       setLoading(true);
+      console.log('Début de refreshUserInfo');
       
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('Session:', session);
       
       if (!session?.user) {
+        console.log('Aucune session utilisateur');
         setUser(null);
         setUserRole(null);
         setTeamId(null);
@@ -44,19 +47,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(session.user);
+      console.log('Utilisateur authentifié:', session.user.id);
 
       // Récupérer les informations de l'utilisateur depuis Supabase
+      console.log('Récupération des informations team_members pour user_id:', session.user.id);
       const { data: teamMember, error } = await supabase
         .from('team_members')
         .select('team_id, role')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
+      console.log('Résultat team_members:', { teamMember, error });
+
       if (error || !teamMember) {
         console.error('Error fetching user info:', error);
         setUserRole(null);
         setTeamId(null);
       } else {
+        console.log('Team member trouvé:', teamMember);
         setUserRole(teamMember.role as 'owner' | 'admin' | 'member');
         setTeamId(teamMember.team_id);
       }
@@ -66,6 +74,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setUserRole(null);
       setTeamId(null);
     } finally {
+      console.log('Fin de refreshUserInfo');
       setLoading(false);
     }
   };
