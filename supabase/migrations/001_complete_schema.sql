@@ -307,23 +307,21 @@ CREATE POLICY "Teams: Allow delete for team owners"
 CREATE POLICY "Team_members: Allow read access to team members"
   ON team_members FOR SELECT
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM team_members tm
-      WHERE tm.team_id = team_members.team_id
-      AND tm.user_id = auth.uid()::text
-    )
-  );
+  USING (user_id = auth.uid()::text);
 
 CREATE POLICY "Team_members: Allow insert for team owners"
   ON team_members FOR INSERT
   TO authenticated
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM team_members
-      WHERE team_members.team_id = team_members.team_id
-      AND team_members.user_id = auth.uid()::text
-      AND team_members.role = 'owner'
+      SELECT 1 FROM teams
+      WHERE teams.id = team_members.team_id
+      AND EXISTS (
+        SELECT 1 FROM team_members tm
+        WHERE tm.team_id = teams.id
+        AND tm.user_id = auth.uid()::text
+        AND tm.role = 'owner'
+      )
     )
   );
 
@@ -331,11 +329,16 @@ CREATE POLICY "Team_members: Allow update for team owners and admins"
   ON team_members FOR UPDATE
   TO authenticated
   USING (
+    user_id = auth.uid()::text OR
     EXISTS (
-      SELECT 1 FROM team_members
-      WHERE team_members.team_id = team_members.team_id
-      AND team_members.user_id = auth.uid()::text
-      AND team_members.role IN ('owner', 'admin')
+      SELECT 1 FROM teams
+      WHERE teams.id = team_members.team_id
+      AND EXISTS (
+        SELECT 1 FROM team_members tm
+        WHERE tm.team_id = teams.id
+        AND tm.user_id = auth.uid()::text
+        AND tm.role IN ('owner', 'admin')
+      )
     )
   );
 
@@ -344,10 +347,14 @@ CREATE POLICY "Team_members: Allow delete for team owners"
   TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM team_members
-      WHERE team_members.team_id = team_members.team_id
-      AND team_members.user_id = auth.uid()::text
-      AND team_members.role = 'owner'
+      SELECT 1 FROM teams
+      WHERE teams.id = team_members.team_id
+      AND EXISTS (
+        SELECT 1 FROM team_members tm
+        WHERE tm.team_id = teams.id
+        AND tm.user_id = auth.uid()::text
+        AND tm.role = 'owner'
+      )
     )
   );
 
