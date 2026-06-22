@@ -65,7 +65,13 @@ export default function RegisterPage() {
       if (!teamResponse.ok) {
         const errorText = await teamResponse.text();
         console.error('Team creation API error:', { status: teamResponse.status, body: errorText });
-        throw new Error('Erreur lors de la création de l\'équipe');
+        
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.error || 'Erreur lors de la création de l\'équipe');
+        } catch {
+          throw new Error('Erreur lors de la création de l\'équipe');
+        }
       }
 
       const result = await teamResponse.json();

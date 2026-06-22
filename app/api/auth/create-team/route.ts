@@ -30,9 +30,20 @@ export async function POST(req: NextRequest) {
 
     if (rpcError) {
       console.error('RPC error:', rpcError);
+      
+      // Handle specific database errors
+      const errorMessage = rpcError.message || '';
+      let userMessage = 'Erreur lors de la création de l\'équipe';
+      
+      if (errorMessage.includes('unique constraint') || errorMessage.includes('slug')) {
+        userMessage = 'Ce domaine d\'équipe existe déjà. Veuillez choisir un autre domaine.';
+      } else if (errorMessage.includes('duplicate')) {
+        userMessage = 'Certaines données existent déjà. Vérifiez vos entrées.';
+      }
+      
       return NextResponse.json(
-        { error: 'RPC error: ' + rpcError.message },
-        { status: 500 }
+        { error: userMessage },
+        { status: 400 }
       );
     }
 
