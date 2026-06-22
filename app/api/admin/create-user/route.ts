@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { clerkClient } from '@clerk/nextjs/server';
 import { createAdminSupabaseClient } from '@/lib/supabase';
 
 // Fonction pour générer un mot de passe sécurisé
@@ -45,26 +44,30 @@ export async function POST(req: Request) {
     // Générer un mot de passe sécurisé
     const password = generateSecurePassword();
 
-    // Créer l'utilisateur dans Clerk
-    const clerk = await clerkClient();
-    const user = await clerk.users.createUser({
-      emailAddress: [email],
+    // Créer l'utilisateur dans Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: email,
       password: password,
-      firstName: first_name,
-      lastName: last_name,
+      email_confirm: true,
+      user_metadata: {
+        first_name: first_name,
+        last_name: last_name,
+        team_id: team_id,
+      },
     });
 
-    // Ajouter l'utilisateur à l'organisation Clerk
-    await clerk.organizations.createOrganizationMembership({
-      organizationId: team.clerk_organization_id,
-      userId: user.id,
-      role: role === 'admin' ? 'admin' : 'org:member',
-    });
+    if (authError || !authData.user) {
+      console.error('Error creating user in Supabase Auth:', authError);
+      return NextResponse.json(
+        { error: 'Error creating user in Supabase Auth' },
+        { status: 500 }
+      );
+    }
 
     // Créer le membre dans Supabase
     const { error: memberError } = await supabase.from('team_members').insert({
       team_id: team_id,
-      clerk_user_id: user.id,
+      clerk_user_id: authData.user.id, // Garder le même nom de champ pour compatibilité
       email: email,
       first_name: first_name,
       last_name: last_name,
@@ -84,7 +87,7 @@ export async function POST(req: Request) {
       success: true,
       email: email,
       password: password,
-      userId: user.id,
+      userId: authData.user.id,
     });
   } catch (error) {
     console.error('Error creating user:', error);
