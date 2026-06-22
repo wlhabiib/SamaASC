@@ -95,6 +95,10 @@ export default function CreateTeamPage() {
             Se connecter avec ces identifiants
             <ArrowRight size={20} />
           </button>
+          
+          <p className="mt-4 text-xs text-gray-500 text-center">
+            Utilisez ces identifiants dans le formulaire de connexion Clerk
+          </p>
         </div>
       </div>
     );
