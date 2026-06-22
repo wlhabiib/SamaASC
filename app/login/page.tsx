@@ -94,21 +94,18 @@ export default function LoginPage() {
       // Attendre que la session soit synchronisée dans les cookies
       console.log('🔄 Synchronisation de la session Supabase...');
       await supabase.auth.refreshSession();
+      console.log('✅ Session refresh complétée');
 
-      // Wait for the context to fully sync before redirecting
-      // This ensures team_members data is fetched
-      console.log('⏳ Attente de synchronisation complète du contexte... (2 secondes)');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait LONGER for cookies to sync on server
+      console.log('⏳ Attente de synchronisation des cookies côté serveur... (5 secondes)');
+      await new Promise(resolve => setTimeout(resolve, 5000));
       
       console.log('🚀 AVANT window.location.href = "/"');
-      console.log('   Cookies disponibles:', document.cookie);
-      console.log('   Session User:', data.user.id);
+      console.log('   Cookies count:', document.cookie.split(';').length);
       
       // Force a full page reload with fresh cookies
       window.location.href = '/';
       console.log('🚀 APRÈS window.location.href = "/" (cette ligne ne devrait pas s\'exécuter)');
-      
-      setLoading(false);
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
       setError('Erreur lors de la connexion');
