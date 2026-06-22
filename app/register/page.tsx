@@ -29,9 +29,8 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      // Supabase removed - Registration disabled
-      setError('Inscription non disponible - Supabase supprimé');
-      setLoading(false);
+      // Rediriger vers Clerk sign-up
+      router.push('/user-register');
       return;
 
       // if (!supabase) {

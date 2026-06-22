@@ -54,9 +54,9 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // TODO: Implement authentication logic without Supabase
-      setError('Connexion non disponible - Supabase a été supprimé');
-      setLoading(false);
+      // Rediriger vers Clerk sign-in
+      router.push('/user-login');
+      return;
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
       setError('Erreur lors de la connexion');
