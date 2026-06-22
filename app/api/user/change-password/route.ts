@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
-import { currentUser } from '@clerk/nextjs/server';
-import { clerkClient } from '@clerk/nextjs/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function POST(req: Request) {
   try {
-    const user = await currentUser();
+    const { data: { session } } = await supabase.auth.getSession();
 
-    if (!user) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'User not authenticated' },
         { status: 401 }
@@ -22,11 +30,18 @@ export async function POST(req: Request) {
       );
     }
 
-    // Changer le mot de passe via Clerk
-    const clerk = await clerkClient();
-    await clerk.users.updateUser(user.id, {
+    // Changer le mot de passe via Supabase Auth
+    const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
+
+    if (error) {
+      console.error('Error changing password:', error);
+      return NextResponse.json(
+        { error: 'Error changing password' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
