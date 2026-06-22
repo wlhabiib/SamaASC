@@ -77,7 +77,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         .from('team_members')
         .select('*')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (memberError || !teamMember) {
         console.error('Error fetching team member:', memberError);
@@ -91,7 +91,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           .from('teams')
           .select('*')
           .eq('id', teamMember.team_id)
-          .single();
+          .maybeSingle();
 
         if (teamError || !teamData) {
           console.error('Error fetching team:', teamError);

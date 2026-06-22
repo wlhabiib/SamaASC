@@ -50,7 +50,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         .from('team_members')
         .select('team_id, role')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (error || !teamMember) {
         console.error('Error fetching user info:', error);
