@@ -35,9 +35,27 @@ export async function middleware(req: NextRequest) {
     }
   )
 
-  const {
+  // Try to get session from cookies first
+  let {
     data: { session },
   } = await supabase.auth.getSession()
+
+  // If no session in cookies, try to get from Authorization header (for fresh logins)
+  if (!session) {
+    const authHeader = req.headers.get('authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7)
+      try {
+        // This will set the session from the token
+        const { data: { user }, error } = await supabase.auth.getUser(token)
+        if (user && !error) {
+          session = { user, access_token: token } as any
+        }
+      } catch (err) {
+        // Silently fail - let the normal flow continue
+      }
+    }
+  }
 
   // Routes publiques (accessibles sans authentification)
   const publicRoutes = ['/login', '/register', '/create-team']

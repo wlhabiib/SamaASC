@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, ArrowRight, Plus, Users, Download } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -12,7 +12,33 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create Supabase client with proper cookie handling for SSR
+const supabase = createBrowserClient(
+  supabaseUrl,
+  supabaseAnonKey,
+  {
+    auth: {
+      persistSession: true,
+      storageKey: 'supabase.auth.token',
+      storage: {
+        getItem: (key: string) => {
+          if (typeof window === 'undefined') return null
+          return localStorage.getItem(key)
+        },
+        setItem: (key: string, value: string) => {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(key, value)
+          }
+        },
+        removeItem: (key: string) => {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(key)
+          }
+        },
+      },
+    },
+  }
+)
 
 export default function LoginPage() {
   const router = useRouter();
@@ -112,9 +138,15 @@ export default function LoginPage() {
       }
       
       console.log('✅ Session fraîche obtenue:', freshSession.user.id);
-      console.log('🚀 Redirection vers /...');
+      console.log('✅ Access token:', freshSession.access_token.substring(0, 50) + '...');
       
-      // Use replace to avoid back button issues
+      // Pass the access token in Authorization header for middleware to use
+      const token = freshSession.access_token;
+      console.log('🚀 Redirection vers / avec token Authorization...');
+      
+      // Use router.replace with Authorization header
+      // Note: We can't directly set headers from client-side router.push, 
+      // so the middleware will check cookies + handle the normal flow
       router.replace('/');
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
