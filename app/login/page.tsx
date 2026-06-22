@@ -91,13 +91,18 @@ export default function LoginPage() {
 
       console.log('✅ Connexion réussie pour utilisateur:', data.user.id);
 
+      // Attendre que la session soit synchronisée dans les cookies
+      console.log('🔄 Synchronisation de la session Supabase...');
+      await supabase.auth.refreshSession();
+
       // Wait for the context to fully sync before redirecting
       // This ensures team_members data is fetched
-      console.log('⏳ Attente de synchronisation complète du contexte... (5 secondes)');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      console.log('⏳ Attente de synchronisation complète du contexte... (3 secondes)');
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       console.log('🚀 Redirection vers /');
       router.push('/');
+      setLoading(false);
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
       setError('Erreur lors de la connexion');
