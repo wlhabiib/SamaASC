@@ -45,56 +45,80 @@ export default function AccueilPage() {
 
   useEffect(() => {
     // Check authentication
-    console.log('Vérification de l\'authentification sur la page d\'accueil');
-    console.log('contextLoading:', contextLoading);
-    console.log('team:', team);
-    console.log('user:', user);
+    console.log('🔐 Vérification authentification page d\'accueil');
+    console.log('   contextLoading:', contextLoading);
+    console.log('   team:', team?.name || 'null');
+    console.log('   user:', user?.email || 'null');
     
-    if (!contextLoading) {
-      if (!team) {
-        console.log('Pas de team, redirection vers /login');
-        router.push('/login');
-        return;
-      }
-      if (!user) {
-        console.log('Pas d\'user, redirection vers /user-login');
-        router.push('/user-login');
-        return;
-      }
-      console.log('Authentification OK, chargement des données');
+    // Wait for context to finish loading before making decisions
+    if (contextLoading) {
+      console.log('⏳ Contexte en cours de chargement...');
+      return;
     }
+    
+    // If context finished loading and still no team, redirect
+    if (!team) {
+      console.log('❌ Pas de team trouvée, redirection vers /login');
+      router.push('/login');
+      return;
+    }
+    
+    // If team found but no user (shouldn't happen for admin)
+    if (!user) {
+      console.log('⚠️ Team trouvée mais pas de user, redirection vers /user-login');
+      router.push('/user-login');
+      return;
+    }
+    
+    console.log('✅ Authentification OK, team:', team.name);
   }, [team, user, contextLoading, router]);
 
   useEffect(() => {
     async function load() {
-      console.log('Début du chargement des données');
+      console.log('📊 Début du chargement des données');
       if (!team) {
-        console.log('Pas de team, annulation du chargement');
+        console.log('⚠️ Pas de team, annulation du chargement');
         return;
       }
       
-      console.log('Chargement des données pour team_id:', team.id);
-      const [ann, m, p, g, u] = await Promise.all([
-        fetch(`/api/data/announcements?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/matches?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/players?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/gallery?team_id=${team.id}`).then(r => r.json()).catch(() => []),
-        fetch(`/api/data/users?team_id=${team.id}`).then(r => r.json()).catch(() => []),
-      ]);
-      console.log('Données chargées:', { ann, m, p, g, u });
-      setAnnouncements(ann);
-      setAllMatches(m);
-      setPlayers(p);
-      setGalleryCount(g.length || 0);
-      setUserCount(u.length || 0);
-      const upcoming = m.filter((match: Match) => match.status === 'upcoming');
-      // Sort by date and show only the closest one
-      const sorted = upcoming.sort((a: Match, b: Match) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
-      setUpcomingMatches(sorted.slice(0, 1));
-      console.log('Fin du chargement des données');
-      setLoading(false);
+      try {
+        console.log('🔄 Chargement des données pour team_id:', team.id);
+        const [ann, m, p, g, u] = await Promise.all([
+          fetch(`/api/data/announcements?team_id=${team.id}`).then(r => r.json()).catch(e => { console.error('❌ Annonces:', e); return []; }),
+          fetch(`/api/data/matches?team_id=${team.id}`).then(r => r.json()).catch(e => { console.error('❌ Matchs:', e); return []; }),
+          fetch(`/api/data/players?team_id=${team.id}`).then(r => r.json()).catch(e => { console.error('❌ Joueurs:', e); return []; }),
+          fetch(`/api/data/gallery?team_id=${team.id}`).then(r => r.json()).catch(() => []),
+          fetch(`/api/data/users?team_id=${team.id}`).then(r => r.json()).catch(() => []),
+        ]);
+        console.log('✅ Données chargées:', { 
+          annonces: ann.length, 
+          matchs: m.length, 
+          joueurs: p.length, 
+          galerie: g.length, 
+          utilisateurs: u.length 
+        });
+        setAnnouncements(ann);
+        setAllMatches(m);
+        setPlayers(p);
+        setGalleryCount(g.length || 0);
+        setUserCount(u.length || 0);
+        const upcoming = m.filter((match: Match) => match.status === 'upcoming');
+        // Sort by date and show only the closest one
+        const sorted = upcoming.sort((a: Match, b: Match) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
+        setUpcomingMatches(sorted.slice(0, 1));
+        console.log('✅ Fin du chargement des données');
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement:', error);
+      } finally {
+        setLoading(false);
+      }
     }
-    load();
+    
+    // Only load data if team is available
+    if (team && !contextLoading) {
+      load();
+    }
+  }, [team, contextLoading]);
 
     // Setup realtime subscriptions - DISABLED (Supabase removed)
     // if (team && supabase) {

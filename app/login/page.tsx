@@ -91,10 +91,10 @@ export default function LoginPage() {
 
       console.log('✅ Connexion réussie pour utilisateur:', data.user.id);
 
-      // Wait a moment for the auth state to propagate before redirecting
-      // This ensures the context has time to fetch team_members data
-      console.log('⏳ Attente de synchronisation du contexte...');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for the context to fully sync before redirecting
+      // This ensures team_members data is fetched
+      console.log('⏳ Attente de synchronisation complète du contexte... (5 secondes)');
+      await new Promise(resolve => setTimeout(resolve, 5000));
       
       console.log('🚀 Redirection vers /');
       router.push('/');
