@@ -3,6 +3,16 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Mail, Lock, ArrowRight, Check } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -29,16 +39,6 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      // Rediriger vers Clerk sign-up
-      router.push('/user-register');
-      return;
-
-      // if (!supabase) {
-      //   setError('Erreur de connexion');
-      //   setLoading(false);
-      //   return;
-      // }
-
       // Validate email domain
       const emailDomain = adminEmail.split('@')[1];
       if (emailDomain !== domain) {
@@ -49,62 +49,60 @@ export default function RegisterPage() {
 
       const adminUsername = adminEmail.split('@')[0];
 
-      // Create team and admin user via RPC (without password, using Supabase Auth) - DISABLED (Supabase removed)
-      // const { data, error: rpcError } = await supabase.rpc('create_team_with_admin', {
-      //   p_team_name: teamName,
-      //   p_team_domain: domain,
-      //   p_admin_email: adminEmail,
-      //   p_admin_username: adminUsername,
-      //   p_admin_password_hash: '' // Not used anymore
-      // });
+      // Call the RPC function to create team and admin user
+      const { data, error: rpcError } = await supabase.rpc('create_team_with_admin', {
+        p_team_name: teamName,
+        p_team_domain: domain,
+        p_admin_email: adminEmail,
+        p_admin_username: adminUsername,
+        p_admin_password_hash: '', // Not used anymore
+      });
 
-      // console.log('RPC result:', data, rpcError);
+      if (rpcError) {
+        console.error('RPC error:', rpcError);
+        throw rpcError;
+      }
 
-      // if (rpcError) {
-      //   console.error('RPC error:', rpcError);
-      //   throw rpcError;
-      // }
+      const result = data as { success?: boolean; error?: string; team_id?: string; user_id?: string };
 
-      // const result = data as { success?: boolean; error?: string; team_id?: string; user_id?: string };
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
 
-      // if (result.error) {
-      //   setError(result.error);
-      //   setLoading(false);
-      //   return;
-      // }
+      if (!result.team_id || !result.user_id) {
+        setError('Failed to create team or user');
+        setLoading(false);
+        return;
+      }
 
-      // if (!result.team_id || !result.user_id) {
-      //   setError('Failed to create team or user');
-      //   setLoading(false);
-      //   return;
-      // }
+      // Sign up user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: adminEmail,
+        password: adminPassword,
+        options: {
+          data: {
+            user_id: result.user_id,
+            team_id: result.team_id,
+            username: adminUsername,
+          }
+        }
+      });
 
-      // Sign up user in Supabase Auth - DISABLED (Supabase removed)
-      // const { data: authData, error: authError } = await supabase.auth.signUp({
-      //   email: adminEmail,
-      //   password: adminPassword,
-      //   options: {
-      //     data: {
-      //       user_id: result.user_id,
-      //       team_id: result.team_id,
-      //       username: adminUsername,
-      //     }
-      //   }
-      // });
+      if (authError) {
+        console.error('Auth error:', authError);
+        setError('Erreur lors de la création du compte: ' + authError.message);
+        setLoading(false);
+        return;
+      }
 
-      // if (authError) {
-      //   console.error('Auth error:', authError);
-      //   setError('Erreur lors de la création du compte: ' + authError.message);
-      //   setLoading(false);
-      //   return;
-      // }
-
-      // setSuccess(true);
+      setSuccess(true);
       
-      // // Redirect to login page after a moment
-      // setTimeout(() => {
-      //   router.push('/login');
-      // }, 2000);
+      // Redirect to login page after a moment
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
     } catch (err) {
       console.error('Erreur lors de la création de l\'équipe:', err);
       setError('Erreur lors de la création de l\'équipe: ' + (err as Error).message);

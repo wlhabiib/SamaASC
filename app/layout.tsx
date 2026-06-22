@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 import { TeamProvider } from '@/contexts/team-context';
 import { UserProvider } from '@/lib/auth-context';
@@ -30,18 +29,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <html lang="fr">
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-        </head>
-        <body className={`${inter.className} antialiased`}>
-          <SplashScreen />
-          <UserProvider>
-            <TeamProvider>{children}</TeamProvider>
-          </UserProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="fr">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+      </head>
+      <body className={`${inter.className} antialiased`}>
+        <SplashScreen />
+        <UserProvider>
+          <TeamProvider>{children}</TeamProvider>
+        </UserProvider>
+      </body>
+    </html>
   );
 }

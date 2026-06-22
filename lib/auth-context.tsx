@@ -1,10 +1,11 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useAuth as useClerkAuth, useUser as useClerkUser } from '@clerk/nextjs';
-import { createClientSupabaseClient } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 
 interface UserContextType {
+  user: User | null;
   userRole: 'owner' | 'admin' | 'member' | null;
   teamId: string | null;
   loading: boolean;
@@ -13,9 +14,17 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 export function UserProvider({ children }: { children: ReactNode }) {
-  const { userId } = useClerkAuth();
-  const { user } = useClerkUser();
+  const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | null>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,19 +33,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       
-      if (!userId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        setUser(null);
         setUserRole(null);
         setTeamId(null);
         setLoading(false);
         return;
       }
 
+      setUser(session.user);
+
       // Récupérer les informations de l'utilisateur depuis Supabase
-      const supabase = createClientSupabaseClient();
       const { data: teamMember, error } = await supabase
         .from('team_members')
         .select('team_id, role')
-        .eq('clerk_user_id', userId)
+        .eq('clerk_user_id', session.user.id)
         .single();
 
       if (error || !teamMember) {
@@ -49,6 +62,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error refreshing user info:', error);
+      setUser(null);
       setUserRole(null);
       setTeamId(null);
     } finally {
@@ -58,10 +72,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshUserInfo();
-  }, [userId]);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        refreshUserInfo();
+      } else {
+        setUser(null);
+        setUserRole(null);
+        setTeamId(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
-    <UserContext.Provider value={{ userRole, teamId, loading, refreshUserInfo }}>
+    <UserContext.Provider value={{ user, userRole, teamId, loading, refreshUserInfo }}>
       {children}
     </UserContext.Provider>
   );

@@ -1,12 +1,12 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useAuth as useClerkAuth, useUser as useClerkUser } from '@clerk/nextjs';
-import { createClientSupabaseClient } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 
 interface Team {
   id: string;
-  clerk_organization_id: string;
+  clerk_organization_id: string | null;
   name: string;
   slug: string;
   logo_url: string | null;
@@ -41,30 +41,42 @@ interface TeamContextType {
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 export function TeamProvider({ children }: { children: ReactNode }) {
-  const { userId } = useClerkAuth();
-  const { user } = useClerkUser();
   const [team, setTeam] = useState<Team | null>(null);
   const [teamUser, setTeamUser] = useState<TeamUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshTeam = async () => {
     try {
       setLoading(true);
       
-      if (!userId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
         setTeam(null);
         setTeamUser(null);
+        setCurrentUser(null);
         setLoading(false);
         return;
       }
 
+      setCurrentUser(session.user);
+
       // Récupérer les informations de l'utilisateur depuis Supabase
-      const supabase = createClientSupabaseClient();
       const { data: teamMember, error: memberError } = await supabase
         .from('team_members')
         .select('*')
-        .eq('clerk_user_id', userId)
+        .eq('clerk_user_id', session.user.id)
         .single();
 
       if (memberError || !teamMember) {
@@ -99,11 +111,27 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshTeam();
-  }, [userId]);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
+        refreshTeam();
+      } else {
+        setCurrentUser(null);
+        setTeam(null);
+        setTeamUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const logout = async () => {
-    // Rediriger vers la page de déconnexion Clerk
-    window.location.href = '/sign-out';
+    await supabase.auth.signOut();
+    setTeam(null);
+    setTeamUser(null);
+    setCurrentUser(null);
+    window.location.href = '/login';
   };
 
   return (

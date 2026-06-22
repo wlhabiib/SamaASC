@@ -2,19 +2,25 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@clerk/nextjs';
-import { Organization } from '@clerk/nextjs/server';
 import { Building2, Check, ArrowRight } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function CreateTeamPage() {
   const router = useRouter();
-  const { userId } = useAuth();
   const [teamName, setTeamName] = useState('');
   const [slug, setSlug] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [adminCredentials, setAdminCredentials] = useState<{ email: string; password: string } | null>(null);
 
   // Générer automatiquement le slug à partir du nom
   const handleTeamNameChange = (value: string) => {
@@ -32,28 +38,26 @@ export default function CreateTeamPage() {
     setError('');
 
     try {
-      // Créer l'organisation et l'utilisateur admin
-      const response = await fetch('/api/admin/create-organization', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Créer l'équipe dans Supabase
+      const { data: team, error: teamError } = await supabase
+        .from('teams')
+        .insert({
           name: teamName,
           slug: slug,
-          createAdmin: true,
-        }),
-      });
+        })
+        .select()
+        .single();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erreur lors de la création de l\'équipe');
+      if (teamError) {
+        throw new Error('Erreur lors de la création de l\'équipe');
       }
 
-      const data = await response.json();
-      setAdminCredentials({
-        email: data.adminEmail,
-        password: data.adminPassword,
-      });
       setSuccess(true);
+
+      // Rediriger vers la page d'accueil après 2 secondes
+      setTimeout(() => {
+        router.push('/');
+      }, 2000);
     } catch (err) {
       console.error('Erreur lors de la création de l\'équipe:', err);
       setError('Erreur lors de la création de l\'équipe: ' + (err as Error).message);
@@ -70,35 +74,7 @@ export default function CreateTeamPage() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Équipe créée avec succès !</h2>
           <p className="text-gray-600">Votre équipe {teamName} a été créée</p>
-          
-          {adminCredentials && (
-            <div className="mt-6 bg-gray-50 rounded-xl p-4 text-left">
-              <h3 className="font-semibold text-gray-900 mb-3">Identifiants administrateur</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-gray-500">Email</label>
-                  <p className="text-sm font-medium text-gray-900">{adminCredentials.email}</p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Mot de passe</label>
-                  <p className="text-sm font-medium text-gray-900">{adminCredentials.password}</p>
-                </div>
-              </div>
-              <p className="text-xs text-red-500 mt-3">⚠️ Sauvegardez ces identifiants, ils ne seront plus affichés.</p>
-            </div>
-          )}
-          
-          <button
-            onClick={() => router.push('/user-login')}
-            className="mt-6 w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-          >
-            Se connecter avec ces identifiants
-            <ArrowRight size={20} />
-          </button>
-          
-          <p className="mt-4 text-xs text-gray-500 text-center">
-            Utilisez ces identifiants dans le formulaire de connexion Clerk
-          </p>
+          <p className="text-sm text-gray-500 mt-2">Redirection en cours...</p>
         </div>
       </div>
     );

@@ -3,6 +3,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, ArrowRight, Plus, Users, Download } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function LoginPage() {
   const router = useRouter();
@@ -54,9 +64,26 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Rediriger vers Clerk sign-in
-      router.push('/user-login');
-      return;
+      // Sign in with Supabase Auth
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (authError) {
+        setError('Identifiants incorrects');
+        setLoading(false);
+        return;
+      }
+
+      if (!data.user) {
+        setError('Erreur lors de la connexion');
+        setLoading(false);
+        return;
+      }
+
+      // Redirect to home after successful login
+      router.push('/');
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
       setError('Erreur lors de la connexion');
