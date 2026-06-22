@@ -97,30 +97,25 @@ export default function LoginPage() {
       console.log('✅ Session refresh complétée');
 
       // Wait for cookies to sync on server
-      console.log('⏳ Attente de synchronisation des cookies côté serveur... (5 secondes)');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      console.log('⏳ Attente de synchronisation de la session...');
+      await supabase.auth.refreshSession();
+      console.log('✅ Session refresh complétée');
       
-      // Verify session on server before redirecting
-      console.log('🚀 Vérification de la session côté serveur...');
-      const verifyRes = await fetch('/api/auth/redirect-home');
+      // Get the session with the new tokens
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
       
-      if (!verifyRes.ok) {
-        console.error('❌ Session not verified on server:', verifyRes.status);
-        setError('Erreur de vérification de session');
+      if (!freshSession) {
+        console.error('❌ No session after refresh');
+        setError('Erreur de synchronisation de session');
         setLoading(false);
         return;
       }
       
-      console.log('✅ Session vérifiée côté serveur');
+      console.log('✅ Session fraîche obtenue:', freshSession.user.id);
       console.log('🚀 Redirection vers /...');
       
-      // Use router push for proper Next.js navigation
-      router.push('/');
-      
-      // Fallback to window.location if push doesn't work
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
+      // Use replace to avoid back button issues
+      router.replace('/');
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
       setError('Erreur lors de la connexion');
