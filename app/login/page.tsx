@@ -100,9 +100,14 @@ export default function LoginPage() {
       console.log('⏳ Attente de synchronisation complète du contexte... (2 secondes)');
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      console.log('🚀 Redirection vers / avec rechargement');
-      // Force a page reload to ensure server-side session is synced
+      console.log('🚀 AVANT window.location.href = "/"');
+      console.log('   Cookies disponibles:', document.cookie);
+      console.log('   Session User:', data.user.id);
+      
+      // Force a full page reload with fresh cookies
       window.location.href = '/';
+      console.log('🚀 APRÈS window.location.href = "/" (cette ligne ne devrait pas s\'exécuter)');
+      
       setLoading(false);
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
