@@ -49,33 +49,34 @@ export default function RegisterPage() {
 
       const adminUsername = adminEmail.split('@')[0];
 
-      // Call the RPC function to create team and admin user
-      const { data, error: rpcError } = await supabase.rpc('create_team_with_admin', {
-        p_team_name: teamName,
-        p_team_domain: domain,
-        p_admin_email: adminEmail,
-        p_admin_username: adminUsername,
-        p_admin_password_hash: '', // Not used anymore
+      // Call the create-team API route instead of RPC directly
+      console.log('Calling create-team API route...');
+      const teamResponse = await fetch('/api/auth/create-team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          team_name: teamName,
+          team_domain: domain,
+          admin_email: adminEmail,
+          admin_username: adminUsername,
+        }),
       });
 
-      if (rpcError) {
-        console.error('RPC error:', rpcError);
-        throw rpcError;
+      if (!teamResponse.ok) {
+        const errorText = await teamResponse.text();
+        console.error('Team creation API error:', { status: teamResponse.status, body: errorText });
+        throw new Error('Erreur lors de la création de l\'équipe');
       }
 
-      const result = data as { success?: boolean; error?: string; team_id?: string; user_id?: string };
+      const result = await teamResponse.json();
+      console.log('Team creation result:', result);
 
       if (result.error) {
-        setError(result.error);
-        setLoading(false);
-        return;
+        throw new Error(result.error);
       }
 
       if (!result.team_id || !result.user_id) {
-        setError('Failed to create team or user');
-        setLoading(false);
-        return;
-      }
+        throw new Error('Failed to create team or user');
 
       // Sign up user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -101,8 +102,8 @@ export default function RegisterPage() {
       const realUserId = authData.user?.id;
       if (realUserId && result.team_id) {
         console.log('Calling API to update team_members with real user ID:', realUserId);
-        const { error: updateApiError } = await (
-          await fetch('/api/auth/update-user-id', {
+        try {
+          const updateResponse = await fetch('/api/auth/update-user-id', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -110,14 +111,22 @@ export default function RegisterPage() {
               temp_user_id: result.user_id,
               real_user_id: realUserId,
             }),
-          })
-        ).json();
+          });
 
-        if (updateApiError) {
-          console.error('Error updating team_members via API:', updateApiError);
+          if (!updateResponse.ok) {
+            const errorText = await updateResponse.text();
+            console.error('API error response:', {
+              status: updateResponse.status,
+              statusText: updateResponse.statusText,
+              body: errorText,
+            });
+          } else {
+            const updateData = await updateResponse.json();
+            console.log('Successfully updated team_members via API:', updateData);
+          }
+        } catch (apiError) {
+          console.error('Error calling update-user-id API:', apiError);
           // Don't fail - continue anyway
-        } else {
-          console.log('Successfully updated team_members via API');
         }
       }
 
