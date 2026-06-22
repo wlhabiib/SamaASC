@@ -77,6 +77,7 @@ export default function RegisterPage() {
 
       if (!result.team_id || !result.user_id) {
         throw new Error('Failed to create team or user');
+      }
 
       // Sign up user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
