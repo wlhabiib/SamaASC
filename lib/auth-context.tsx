@@ -49,7 +49,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const { data: teamMember, error } = await supabase
         .from('team_members')
         .select('team_id, role')
-        .eq('clerk_user_id', session.user.id)
+        .eq('user_id', session.user.id)
         .single();
 
       if (error || !teamMember) {

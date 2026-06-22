@@ -6,7 +6,7 @@ import { User } from '@supabase/supabase-js';
 
 interface Team {
   id: string;
-  clerk_organization_id: string | null;
+  organization_id: string | null;
   name: string;
   slug: string;
   logo_url: string | null;
@@ -21,7 +21,7 @@ interface Team {
 interface TeamUser {
   id: string;
   team_id: string;
-  clerk_user_id: string;
+  user_id: string;
   email: string;
   first_name: string | null;
   last_name: string | null;
@@ -76,7 +76,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       const { data: teamMember, error: memberError } = await supabase
         .from('team_members')
         .select('*')
-        .eq('clerk_user_id', session.user.id)
+        .eq('user_id', session.user.id)
         .single();
 
       if (memberError || !teamMember) {

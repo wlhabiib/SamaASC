@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     // Créer le membre dans Supabase
     const { error: memberError } = await supabase.from('team_members').insert({
       team_id: team_id,
-      clerk_user_id: authData.user.id, // Garder le même nom de champ pour compatibilité
+      user_id: authData.user.id,
       email: email,
       first_name: first_name,
       last_name: last_name,
