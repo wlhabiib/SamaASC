@@ -2,12 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
 import { Lock, Check, ArrowRight } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const { user } = useUser();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -33,19 +41,34 @@ export default function ChangePasswordPage() {
     }
 
     try {
-      // Changer le mot de passe via Clerk
-      const response = await fetch('/api/user/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
+      // Changer le mot de passe via Supabase Auth
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setError('Vous devez être connecté pour changer votre mot de passe');
+        setLoading(false);
+        return;
+      }
+
+      // Vérifier le mot de passe actuel en se reconnectant
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: session.user.email!,
+        password: currentPassword,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erreur lors du changement de mot de passe');
+      if (signInError) {
+        setError('Le mot de passe actuel est incorrect');
+        setLoading(false);
+        return;
+      }
+
+      // Changer le mot de passe
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) {
+        throw new Error(updateError.message);
       }
 
       setSuccess(true);
