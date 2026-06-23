@@ -109,6 +109,20 @@ export default function AccueilPage() {
     }
   }, [team, contextLoading]);
 
+  // Reload gallery count when page becomes visible (after admin adds items)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && team) {
+        fetchWithCache<any[]>(`/api/data/gallery?team_id=${team.id}`, `gallery_${team.id}`)
+          .then(g => setGalleryCount((g as any[]).length || 0))
+          .catch(console.error);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [team]);
+
   const upcomingMatches = allMatches.filter(m => m.status === 'upcoming' || m.status === 'live');
 
   if (loading || contextLoading) {

@@ -408,14 +408,27 @@ export default function AdminPage() {
         body: JSON.stringify(editing ? { ...payload, id: editing } : payload),
       });
 
+      const responseText = await response.text();
+      console.log('Gallery API response:', response.status, responseText);
+
       if (!response.ok) {
-        const error = await response.json();
+        let error;
+        try {
+          error = JSON.parse(responseText);
+        } catch {
+          error = { error: responseText || 'Erreur inconnue' };
+        }
         console.error('Gallery API error:', error);
         alert('Erreur: ' + (error.error || 'Erreur lors de la sauvegarde'));
         return;
       }
 
       setShowForm(false); setEditing(null); setForm({}); loadAll();
+
+      // Clear gallery cache so home page updates
+      if (typeof window !== 'undefined' && team) {
+        localStorage.removeItem(`samaasc_cache_gallery_${team.id}`);
+      }
     } catch (error) {
       console.error('Error saving gallery:', error);
       alert('Erreur lors de la sauvegarde: ' + (error as Error).message);

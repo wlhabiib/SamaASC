@@ -12,12 +12,12 @@ interface FileUploadProps {
   label?: string;
 }
 
-export default function FileUpload({ 
-  value, 
-  onChange, 
+export default function FileUpload({
+  value,
+  onChange,
   onTypeChange,
   accept = 'image/*',
-  maxSize = 5,
+  maxSize = 2,
   label = 'Image'
 }: FileUploadProps) {
   const [preview, setPreview] = useState<string | null>(value);
@@ -30,7 +30,7 @@ export default function FileUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size
+    // Check file size - reduced to 2MB to avoid Vercel request size limits
     if (file.size > maxSize * 1024 * 1024) {
       setError(`Fichier trop volumineux (max ${maxSize}MB)`);
       return;

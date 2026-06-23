@@ -19,7 +19,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    console.log('Gallery POST request:', { type, url: url.substring(0, 50) + '...', caption, event_type, team_id });
+    // Check if URL is too long (Base64 data can be very large)
+    if (url.length > 10000000) { // 10MB limit
+      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 });
+    }
+
+    console.log('Gallery POST request:', { type, urlLength: url.length, caption, event_type, team_id });
 
     const { data, error } = await supabase
       .from('gallery')
@@ -42,7 +47,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error('Gallery POST error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error: ' + (error as Error).message }, { status: 500 });
   }
 }
 
