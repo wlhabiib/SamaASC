@@ -1466,6 +1466,8 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
   const [description, setDescription] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#020617');
   const [secondaryColor, setSecondaryColor] = useState('#e0f2fe');
+  const [accentColor, setAccentColor] = useState('#020617');
+  const [navColor, setNavColor] = useState('#020617');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [teamPhotoFile, setTeamPhotoFile] = useState<File | null>(null);
@@ -1480,6 +1482,8 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
       setDescription(team.description || '');
       setPrimaryColor(team.primary_color || '#020617');
       setSecondaryColor(team.secondary_color || '#e0f2fe');
+      setAccentColor(team.accent_color || '#020617');
+      setNavColor(team.nav_color || '#020617');
       setLogoPreview(team.logo_url);
       setTeamPhotoPreview(team.team_photo_url);
     }
@@ -1569,8 +1573,8 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
         description,
         primary_color: primaryColor,
         secondary_color: secondaryColor,
-        accent_color: primaryColor,
-        nav_color: primaryColor,
+        accent_color: accentColor,
+        nav_color: navColor,
         logo_url: logoUrl,
         team_photo_url: teamPhotoUrl,
       };
@@ -1818,6 +1822,66 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
                 />
                 <button
                   onClick={() => setSecondaryColor('#e0f2fe')}
+                  className="px-3 py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors border border-white/30"
+                >
+                  Réinitialiser
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/90 mb-2">
+                Couleur d'accent
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div
+                    className="w-16 h-16 rounded-xl shadow-md"
+                    style={{ backgroundColor: accentColor }}
+                  />
+                  {accentColor === '#020617' && (
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md">
+                      <Check size={12} className="text-green-600" />
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white/30"
+                />
+                <button
+                  onClick={() => setAccentColor('#020617')}
+                  className="px-3 py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors border border-white/30"
+                >
+                  Réinitialiser
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/90 mb-2">
+                Couleur de navigation
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div
+                    className="w-16 h-16 rounded-xl shadow-md"
+                    style={{ backgroundColor: navColor }}
+                  />
+                  {navColor === '#020617' && (
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md">
+                      <Check size={12} className="text-green-600" />
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="color"
+                  value={navColor}
+                  onChange={(e) => setNavColor(e.target.value)}
+                  className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white/30"
+                />
+                <button
+                  onClick={() => setNavColor('#020617')}
                   className="px-3 py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors border border-white/30"
                 >
                   Réinitialiser
