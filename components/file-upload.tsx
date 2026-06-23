@@ -10,6 +10,7 @@ interface FileUploadProps {
   accept?: string;
   maxSize?: number; // in MB
   label?: string;
+  teamId?: string;
 }
 
 export default function FileUpload({
@@ -18,7 +19,8 @@ export default function FileUpload({
   onTypeChange,
   accept = 'image/*,video/*',
   maxSize = 2,
-  label = 'Image'
+  label = 'Image',
+  teamId
 }: FileUploadProps) {
   const [preview, setPreview] = useState<string | null>(value);
   const [uploading, setUploading] = useState(false);
@@ -49,17 +51,39 @@ export default function FileUpload({
     }
 
     try {
-      // Convert file to Base64
+      // Upload to Supabase Storage via API
+      if (!teamId) {
+        throw new Error('teamId is required for upload');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('team_id', teamId);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      const previewUrl = isVideo ? data.url : data.url;
+
+      // Create local preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setPreview(base64);
-        onChange(base64);
+        setPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+
+      onChange(data.url);
     } catch (err) {
       console.error('Upload error:', err);
-      setError('Erreur lors de l\'upload');
+      setError('Erreur lors de l\'upload: ' + (err as Error).message);
       setPreview(value);
     } finally {
       setUploading(false);

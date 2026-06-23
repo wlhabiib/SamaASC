@@ -1336,6 +1336,7 @@ export default function AdminPage() {
                   onTypeChange={(type) => setForm(prev => ({ ...prev, type }))}
                   label="Fichier"
                   accept="image/*,video/*"
+                  teamId={team?.id}
                 />
                 <Input label="Légende" field="caption" placeholder="Description..." value={form.caption || ''} onChange={(value) => setForm(prev => ({ ...prev, caption: value }))} />
                 <Select label="Type événement" field="event_type" options={[

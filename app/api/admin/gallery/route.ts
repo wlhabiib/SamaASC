@@ -19,16 +19,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check if URL is too long (Base64 data can be very large)
-    // 10MB for videos, 2MB for images (Base64 is ~33% larger)
-    if (type === 'video' && url.length > 15000000) { // ~10MB video in Base64
-      return NextResponse.json({ error: 'Video too large. Maximum size is 10MB.' }, { status: 400 });
-    }
-    if (type === 'image' && url.length > 3000000) { // ~2MB image in Base64
-      return NextResponse.json({ error: 'Image too large. Maximum size is 2MB.' }, { status: 400 });
-    }
-
-    console.log('Gallery POST request:', { type, urlLength: url.length, caption, event_type, team_id });
+    // No size check needed - files are uploaded to Supabase Storage with 10MB limit
 
     const { data, error } = await supabase
       .from('gallery')
@@ -47,7 +38,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log('Gallery item created:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Gallery POST error:', error);
