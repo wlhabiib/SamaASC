@@ -4,11 +4,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
 import { Announcement, Match, Player } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetcher } from '@/utils/fetcher';
+import { fetchWithCache, clearCache } from '@/utils/cache';
 import { Calendar, MapPin, Clock, Trophy, Users, Image, ChevronRight, Home } from 'lucide-react';
 
 const TYPE_CONFIG: Record<string, { icon: typeof Calendar; color: string; bg: string; label: string }> = {
@@ -37,42 +36,52 @@ function daysUntil(dateStr: string) {
 export default function AccueilPage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [allMatches, setAllMatches] = useState<Match[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [galleryCount, setGalleryCount] = useState(0);
+  const [userCount, setUserCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // SWR hooks for data fetching with caching
-  const { data: announcements = [] } = useSWR<Announcement[]>(
-    team ? `/api/data/announcements?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
+  useEffect(() => {
+    async function load() {
+      if (!team) return;
 
-  const { data: allMatches = [] } = useSWR<Match[]>(
-    team ? `/api/data/matches?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
+      try {
+        const [ann, m, p, g, u] = await Promise.all([
+          fetchWithCache<Announcement[]>(`/api/data/announcements?team_id=${team.id}`, `announcements_${team.id}`),
+          fetchWithCache<Match[]>(`/api/data/matches?team_id=${team.id}`, `matches_${team.id}`),
+          fetchWithCache<Player[]>(`/api/data/players?team_id=${team.id}`, `players_${team.id}`),
+          fetchWithCache<any[]>(`/api/data/gallery?team_id=${team.id}`, `gallery_${team.id}`),
+          fetchWithCache<any[]>(`/api/data/users?team_id=${team.id}`, `users_${team.id}`),
+        ]);
 
-  const { data: players = [] } = useSWR<Player[]>(
-    team ? `/api/data/players?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const validAnnouncements = ann.filter((announcement: Announcement) => {
+          if (!announcement.event_date) return true;
+          const eventDate = new Date(announcement.event_date + 'T00:00:00');
+          return eventDate.getTime() >= now.getTime();
+        });
 
-  const { data: gallery = [] } = useSWR(
-    team ? `/api/data/gallery?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
+        setAnnouncements(validAnnouncements);
+        setAllMatches(m);
+        setPlayers(p);
+        setGalleryCount((g as any[]).length || 0);
+        setUserCount((u as any[]).length || 0);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const { data: users = [] } = useSWR(
-    team ? `/api/data/users?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
+    if (team && !contextLoading) {
+      load();
+    }
+  }, [team, contextLoading]);
 
-  // Filter upcoming matches
   const upcomingMatches = allMatches.filter(m => m.status === 'upcoming' || m.status === 'live');
-  const galleryCount = gallery.length;
-  const userCount = users.length;
 
   useEffect(() => {
     // Check authentication
@@ -104,7 +113,7 @@ export default function AccueilPage() {
     console.log('✅ Authentification OK, team:', team.name);
   }, [team, user, contextLoading, router]);
 
-  if (contextLoading) {
+  if (loading || contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">

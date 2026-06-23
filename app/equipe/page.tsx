@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
 import { Player, Coach, PlayerStat, MatchLineup, Match, POSITION_LABELS } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetcher } from '@/utils/fetcher';
+import { fetchWithCache } from '@/utils/cache';
 import { Shirt, User, Target, Footprints, Trophy, Medal, ChevronDown, Users } from 'lucide-react';
 
 const FORMATIONS: Record<string, { slot: number; x: number; y: number; label: string }[]> = {
@@ -54,38 +53,12 @@ const FORMATIONS: Record<string, { slot: number; x: number; y: number; label: st
 export default function EquipePage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-
-  // SWR hooks for data fetching with caching
-  const { data: players = [] } = useSWR<Player[]>(
-    team ? `/api/data/players?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
-  const { data: coach } = useSWR<Coach>(
-    team ? `/api/data/coach?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
-  const { data: stats = [] } = useSWR<PlayerStat[]>(
-    team ? `/api/data/player-stats?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
-  const { data: matches = [] } = useSWR<Match[]>(
-    team ? `/api/data/matches?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
-  const { data: lineups = [] } = useSWR<MatchLineup[]>(
-    team ? `/api/data/match-lineup?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [coach, setCoach] = useState<Coach | null>(null);
+  const [stats, setStats] = useState<PlayerStat[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [lineups, setLineups] = useState<MatchLineup[]>([]);
+  const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'field' | 'list' | 'stats'>('field');
   const [statsComp, setStatsComp] = useState<string>('all');
   const [selectedMatchId, setSelectedMatchId] = useState<string>('');
@@ -105,18 +78,44 @@ export default function EquipePage() {
     }
   }, [team, user, contextLoading, router]);
 
-  // Auto-select next upcoming match when matches load
   useEffect(() => {
-    if (matches.length > 0 && !selectedMatchId) {
-      const upcoming = matches.find(m => m.status === 'upcoming');
-      if (upcoming) {
-        setSelectedMatchId(upcoming.id);
-        setSelectedFormation(upcoming.formation || '4-3-3');
+    async function load() {
+      if (!team) return;
+
+      try {
+        const [p, c, s, m, l] = await Promise.all([
+          fetchWithCache<Player[]>(`/api/data/players?team_id=${team.id}`, `players_${team.id}`),
+          fetchWithCache<Coach>(`/api/data/coach?team_id=${team.id}`, `coach_${team.id}`),
+          fetchWithCache<PlayerStat[]>(`/api/data/player-stats?team_id=${team.id}`, `stats_${team.id}`),
+          fetchWithCache<Match[]>(`/api/data/matches?team_id=${team.id}`, `matches_${team.id}`),
+          fetchWithCache<MatchLineup[]>(`/api/data/match-lineup?team_id=${team.id}`, `lineups_${team.id}`),
+        ]);
+
+        setPlayers(p);
+        if (c) setCoach(c);
+        setStats(s);
+        setMatches(m);
+        setLineups(l);
+
+        // Auto-select next upcoming match
+        const upcoming = m.find(m => m.status === 'upcoming');
+        if (upcoming) {
+          setSelectedMatchId(upcoming.id);
+          setSelectedFormation(upcoming.formation || '4-3-3');
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
       }
     }
-  }, [matches, selectedMatchId]);
 
-  if (contextLoading) {
+    if (team && !contextLoading) {
+      load();
+    }
+  }, [team, contextLoading]);
+
+  if (loading || contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">

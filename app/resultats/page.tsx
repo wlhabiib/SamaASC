@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
 import { Match, Player, MatchVote, Competition } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetcher } from '@/utils/fetcher';
+import { fetchWithCache } from '@/utils/cache';
 import { Trophy, Calendar, MapPin, ThumbsUp, Check, ScrollText, X } from 'lucide-react';
 
 function formatDate(dateStr: string) {
@@ -17,33 +16,11 @@ function formatDate(dateStr: string) {
 export default function ResultatsPage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-
-  // SWR hooks for data fetching with caching
-  const { data: matches = [] } = useSWR<Match[]>(
-    team ? `/api/data/matches?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
-  const { data: players = [] } = useSWR<Player[]>(
-    team ? `/api/data/players?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
-  const { data: votes = [] } = useSWR<MatchVote[]>(
-    team ? `/api/data/match-votes?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
-  const { data: competitions = [] } = useSWR<Competition[]>(
-    team ? `/api/data/competitions?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
-  // Local state for voting functionality
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [votes, setVotes] = useState<MatchVote[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [loading, setLoading] = useState(true);
   const [voterName, setVoterName] = useState('');
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [votedFor, setVotedFor] = useState<string | null>(null);
@@ -66,6 +43,34 @@ export default function ResultatsPage() {
       }
     }
   }, [team, user, contextLoading, router]);
+
+  useEffect(() => {
+    async function load() {
+      if (!team) return;
+
+      try {
+        const [m, p, v, c] = await Promise.all([
+          fetchWithCache<Match[]>(`/api/data/matches?team_id=${team.id}`, `matches_${team.id}`),
+          fetchWithCache<Player[]>(`/api/data/players?team_id=${team.id}`, `players_${team.id}`),
+          fetchWithCache<MatchVote[]>(`/api/data/match-votes?team_id=${team.id}`, `votes_${team.id}`),
+          fetchWithCache<Competition[]>(`/api/data/competitions?team_id=${team.id}`, `competitions_${team.id}`),
+        ]);
+
+        setMatches(m);
+        setPlayers(p);
+        setVotes(v);
+        setCompetitions(c || []);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (team && !contextLoading) {
+      load();
+    }
+  }, [team, contextLoading]);
 
   const handleVote = async (matchId: string, playerId: string) => {
     if (!voterName.trim() || !team) return;

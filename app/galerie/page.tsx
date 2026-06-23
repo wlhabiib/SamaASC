@@ -2,24 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
 import { GalleryItem } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetcher } from '@/utils/fetcher';
+import { fetchWithCache } from '@/utils/cache';
 import { Image as ImageIcon, Play, X, ZoomIn, Download } from 'lucide-react';
 
 export default function GaleriePage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-
-  // SWR hook for data fetching with caching
-  const { data: items = [] } = useSWR<GalleryItem[]>(
-    team ? `/api/data/gallery?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [filter, setFilter] = useState<string>('all');
 
@@ -37,7 +30,26 @@ export default function GaleriePage() {
     }
   }, [team, user, contextLoading, router]);
 
-  if (contextLoading) {
+  useEffect(() => {
+    async function load() {
+      if (!team) return;
+
+      try {
+        const data = await fetchWithCache<GalleryItem[]>(`/api/data/gallery?team_id=${team.id}`, `gallery_${team.id}`);
+        setItems(data);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (team && !contextLoading) {
+      load();
+    }
+  }, [team, contextLoading]);
+
+  if (loading || contextLoading) {
     return (
       <AppShell>
         <div className="grid grid-cols-2 gap-3 pt-4">

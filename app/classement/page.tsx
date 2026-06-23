@@ -2,30 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
 import { Standing, Competition } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetcher } from '@/utils/fetcher';
+import { fetchWithCache } from '@/utils/cache';
 import { Trophy } from 'lucide-react';
 
 export default function ClassementPage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-
-  // SWR hooks for data fetching with caching
-  const { data: standings = [] } = useSWR<Standing[]>(
-    team ? `/api/data/standings?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
-  const { data: competitions = [] } = useSWR<Competition[]>(
-    team ? `/api/data/competitions?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
+  const [standings, setStandings] = useState<Standing[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCompetition, setSelectedCompetition] = useState<string>('');
 
   useEffect(() => {
@@ -42,14 +30,35 @@ export default function ClassementPage() {
     }
   }, [team, user, contextLoading, router]);
 
-  // Auto-select first competition when standings load
   useEffect(() => {
-    if (standings.length > 0 && !selectedCompetition) {
-      setSelectedCompetition(standings[0].competition_name);
-    }
-  }, [standings, selectedCompetition]);
+    async function load() {
+      if (!team) return;
 
-  if (contextLoading) {
+      try {
+        const [s, c] = await Promise.all([
+          fetchWithCache<Standing[]>(`/api/data/standings?team_id=${team.id}`, `standings_${team.id}`),
+          fetchWithCache<Competition[]>(`/api/data/competitions?team_id=${team.id}`, `competitions_${team.id}`),
+        ]);
+
+        setStandings(s);
+        setCompetitions(c || []);
+
+        if (s && s.length > 0) {
+          setSelectedCompetition(s[0].competition_name);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (team && !contextLoading) {
+      load();
+    }
+  }, [team, contextLoading]);
+
+  if (loading || contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">

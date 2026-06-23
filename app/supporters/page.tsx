@@ -2,24 +2,17 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
 import { Supporter } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetcher } from '@/utils/fetcher';
+import { fetchWithCache, setCachedData } from '@/utils/cache';
 import { Heart, Send, Flame, MessageCircle, Mic, ImagePlus, X, Play, Smile, Paperclip } from 'lucide-react';
 
 export default function SupportersPage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-
-  // SWR hook for data fetching with caching
-  const { data: supporters = [], mutate } = useSWR<Supporter[]>(
-    team ? `/api/data/supporters?team_id=${team.id}` : null,
-    fetcher,
-    { revalidateOnFocus: false, revalidateOnReconnect: false }
-  );
-
+  const [supporters, setSupporters] = useState<Supporter[]>([]);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
@@ -43,6 +36,25 @@ export default function SupportersPage() {
       }
     }
   }, [team, user, contextLoading, router]);
+
+  useEffect(() => {
+    async function load() {
+      if (!team) return;
+
+      try {
+        const data = await fetchWithCache<Supporter[]>(`/api/data/supporters?team_id=${team.id}`, `supporters_${team.id}`);
+        setSupporters(data || []);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (team && !contextLoading) {
+      load();
+    }
+  }, [team, contextLoading]);
 
   const startRecording = async () => {
     try {
@@ -127,16 +139,16 @@ export default function SupportersPage() {
       const data = await response.json();
       console.log('Success response:', data);
 
-      // Optimistic update with SWR mutate
-      mutate([...supporters, data], false);
+      // Optimistic update
+      setSupporters([data, ...supporters]);
+
+      // Update cache
+      setCachedData(`supporters_${team.id}`, [data, ...supporters]);
 
       // Reset form
       setMessage('');
       setSelectedSticker(null);
       setRecordedAudio(null);
-
-      // Revalidate to get fresh data from server
-      mutate();
     } catch (error) {
       console.error('Error submitting message:', error);
       alert('Erreur lors de l\'envoi du message');
@@ -145,7 +157,7 @@ export default function SupportersPage() {
     }
   };
 
-  if (contextLoading) {
+  if (loading || contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">
