@@ -49,9 +49,13 @@ export default function Header() {
             className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden border-2 border-sky-400/30"
             title={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email || 'Utilisateur'}
           >
-            <div className="w-full h-full rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-400 to-sky-600">
-              <User size={16} className="text-white" />
-            </div>
+            {user?.profile_photo_url ? (
+              <img src={user.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-400 to-sky-600">
+                <User size={16} className="text-white" />
+              </div>
+            )}
           </div>
           
           {/* Logout button */}

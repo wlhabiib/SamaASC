@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS team_members (
   email TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
+  profile_photo_url TEXT,
   role TEXT NOT NULL DEFAULT 'member', -- 'owner', 'admin', 'member'
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

@@ -104,7 +104,7 @@ export default function SupportersPage() {
           name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
           message: (selectedSticker ? selectedSticker + ' ' : '') + message.trim(),
           team_id: team.id,
-          profile_photo_url: null // Pas de photo de profil dans team_members, utiliser avatar par défaut
+          profile_photo_url: (user as any).profile_photo_url || null
         }),
       });
 

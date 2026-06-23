@@ -25,6 +25,7 @@ interface TeamUser {
   email: string;
   first_name: string | null;
   last_name: string | null;
+  profile_photo_url: string | null;
   role: 'owner' | 'admin' | 'member';
   is_active: boolean;
 }
