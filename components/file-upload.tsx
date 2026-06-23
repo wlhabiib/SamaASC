@@ -47,40 +47,14 @@ export default function FileUpload({
     }
 
     try {
-      // Create preview
+      // Convert file to Base64
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreview(reader.result as string);
+        const base64 = reader.result as string;
+        setPreview(base64);
+        onChange(base64);
       };
       reader.readAsDataURL(file);
-
-      // Upload to Supabase Storage - DISABLED (Supabase removed)
-      // const fileExt = file.name.split('.').pop();
-      // const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      // const filePath = `uploads/${fileName}`;
-
-      // const { supabase } = await import('@/lib/supabase');
-      
-      // if (!supabase) {
-      //   setError('Erreur de connexion');
-      //   setUploading(false);
-      //   return;
-      // }
-      
-      // const { error: uploadError } = await supabase.storage
-      //   .from('team-assets')
-      //   .upload(filePath, file);
-
-      // if (uploadError) throw uploadError;
-
-      // const { data: { publicUrl } } = supabase.storage
-      //   .from('team-assets')
-      //   .getPublicUrl(filePath);
-
-      // onChange(publicUrl);
-      
-      setError('Upload désactivé - Supabase supprimé');
-      setUploading(false);
     } catch (err) {
       console.error('Upload error:', err);
       setError('Erreur lors de l\'upload');

@@ -384,7 +384,12 @@ export default function AdminPage() {
 
   const handleGallerySubmit = async () => {
     if (!team) return;
-    
+
+    if (!form.url) {
+      alert('Veuillez sélectionner une image ou une vidéo');
+      return;
+    }
+
     try {
       // Auto-detect type from URL if not set
       let type = form.type || 'image';
@@ -395,22 +400,25 @@ export default function AdminPage() {
       }
 
       const payload = { type, url: form.url, caption: form.caption || null, event_type: form.event_type || 'other', team_id: team.id };
-      if (editing) {
-        await fetch('/api/admin/gallery', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, id: editing }),
-        });
-      } else {
-        await fetch('/api/admin/gallery', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+      console.log('Submitting gallery item:', { type, urlLength: form.url.length, caption: form.caption, event_type: form.event_type, team_id: team.id });
+
+      const response = await fetch('/api/admin/gallery', {
+        method: editing ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editing ? { ...payload, id: editing } : payload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Gallery API error:', error);
+        alert('Erreur: ' + (error.error || 'Erreur lors de la sauvegarde'));
+        return;
       }
+
       setShowForm(false); setEditing(null); setForm({}); loadAll();
     } catch (error) {
       console.error('Error saving gallery:', error);
+      alert('Erreur lors de la sauvegarde: ' + (error as Error).message);
     }
   };
 

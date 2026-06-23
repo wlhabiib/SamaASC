@@ -19,24 +19,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    console.log('Gallery POST request:', { type, url: url.substring(0, 50) + '...', caption, event_type, team_id });
+
     const { data, error } = await supabase
       .from('gallery')
-      .insert({ 
+      .insert({
         type: type || 'image',
         url,
         caption,
         event_type: event_type || 'other',
-        team_id 
+        team_id
       })
       .select()
       .single();
 
     if (error) {
+      console.error('Supabase error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    console.log('Gallery item created:', data);
     return NextResponse.json(data);
   } catch (error) {
+    console.error('Gallery POST error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
