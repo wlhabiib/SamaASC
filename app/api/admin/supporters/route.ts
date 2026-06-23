@@ -13,18 +13,32 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, message, team_id, profile_photo_url } = body;
+    const { name, message, team_id, profile_photo_url, message_type, voice_url, sticker_url } = body;
 
-    console.log('Creating supporter:', { name, message, team_id, profile_photo_url });
+    console.log('Creating supporter:', { name, message, team_id, profile_photo_url, message_type, voice_url, sticker_url });
 
-    if (!name || !message || !team_id) {
+    if (!name || !team_id) {
       console.error('Missing required fields');
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Validate that at least one content type is provided
+    if (!message && !voice_url && !sticker_url) {
+      console.error('No content provided');
+      return NextResponse.json({ error: 'No content provided' }, { status: 400 });
+    }
+
     const { data, error } = await supabase
       .from('supporters')
-      .insert({ name, message, team_id, profile_photo_url })
+      .insert({ 
+        name, 
+        message: message || null, 
+        team_id, 
+        profile_photo_url,
+        message_type: message_type || 'text',
+        voice_url: voice_url || null,
+        sticker_url: sticker_url || null
+      })
       .select()
       .single();
 

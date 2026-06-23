@@ -139,6 +139,19 @@ CREATE TABLE IF NOT EXISTS supporters (
   name TEXT NOT NULL,
   message TEXT,
   profile_photo_url TEXT,
+  message_type TEXT DEFAULT 'text', -- 'text', 'voice', 'sticker'
+  voice_url TEXT, -- URL pour les messages vocaux
+  sticker_url TEXT, -- URL pour les stickers personnalisés
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Table custom_stickers
+CREATE TABLE IF NOT EXISTS custom_stickers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  url TEXT NOT NULL,
+  uploaded_by TEXT NOT NULL, -- user_id
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

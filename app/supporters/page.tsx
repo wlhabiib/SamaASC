@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Supporter } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { Heart, Send, Flame, MessageCircle } from 'lucide-react';
+import { Heart, Send, Flame, MessageCircle, Mic, ImagePlus, X, Play } from 'lucide-react';
 
 export default function SupportersPage() {
   const router = useRouter();
@@ -15,6 +15,13 @@ export default function SupportersPage() {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
+  const [customStickers, setCustomStickers] = useState<any[]>([]);
+  const [showStickerUpload, setShowStickerUpload] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
+  const [selectedCustomSticker, setSelectedCustomSticker] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const STICKERS = ['⚽', '🔥', '💪', '🎉', '👏', '❤️', '⭐', '🏆', '🚀', '💯'];
 
@@ -42,6 +49,11 @@ export default function SupportersPage() {
       console.log('Initial load supporters:', data);
       setSupporters(data || []);
       setLoading(false);
+
+      // Load custom stickers
+      const stickersResponse = await fetch(`/api/admin/custom-stickers?team_id=${team.id}`);
+      const stickersData = await stickersResponse.json();
+      setCustomStickers(stickersData || []);
     }
     load();
 
@@ -88,13 +100,97 @@ export default function SupportersPage() {
     // }
   }, [team]);
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setRecordedAudio(audioUrl);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      alert('Impossible d\'accéder au microphone');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
+  };
+
+  const handleStickerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && team && user) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        try {
+          const response = await fetch('/api/admin/custom-stickers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              team_id: team.id,
+              name: file.name,
+              url: base64,
+              uploaded_by: user.user_id
+            }),
+          });
+          if (response.ok) {
+            const newSticker = await response.json();
+            setCustomStickers(prev => [newSticker, ...prev]);
+            setShowStickerUpload(false);
+          }
+        } catch (error) {
+          console.error('Error uploading sticker:', error);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !team) return;
-    if (!selectedSticker && !message.trim()) return;
+    if (!selectedSticker && !selectedCustomSticker && !message.trim() && !recordedAudio) return;
     setSubmitting(true);
 
-    console.log('Submitting supporter message:', { user: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email, message: (selectedSticker ? selectedSticker + ' ' : '') + message.trim(), team_id: team.id, profile_photo_url: null });
+    let voiceUrl = null;
+    let message_type = 'text';
+
+    // Handle voice message
+    if (recordedAudio) {
+      message_type = 'voice';
+      // Convert audio blob to base64
+      const response = await fetch(recordedAudio);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+      voiceUrl = await base64Promise;
+    }
+
+    // Handle custom sticker
+    if (selectedCustomSticker) {
+      message_type = 'sticker';
+    }
 
     try {
       const response = await fetch('/api/admin/supporters', {
@@ -102,9 +198,12 @@ export default function SupportersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
-          message: (selectedSticker ? selectedSticker + ' ' : '') + message.trim(),
+          message: selectedCustomSticker ? null : (selectedSticker ? selectedSticker + ' ' : '') + message.trim(),
           team_id: team.id,
-          profile_photo_url: (user as any).profile_photo_url || null
+          profile_photo_url: (user as any).profile_photo_url || null,
+          message_type,
+          voice_url: voiceUrl,
+          sticker_url: selectedCustomSticker
         }),
       });
 
@@ -126,6 +225,8 @@ export default function SupportersPage() {
       setSupporters(supportersData || []);
       setMessage('');
       setSelectedSticker(null);
+      setSelectedCustomSticker(null);
+      setRecordedAudio(null);
     } catch (error) {
       console.error('Error submitting message:', error);
       alert('Erreur lors de l\'envoi du message');
@@ -211,12 +312,15 @@ export default function SupportersPage() {
             </div>
 
             {/* Sticker Picker */}
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap mb-3">
               {STICKERS.map((sticker) => (
                 <button
                   key={sticker}
                   type="button"
-                  onClick={() => setSelectedSticker(selectedSticker === sticker ? null : sticker)}
+                  onClick={() => {
+                    setSelectedSticker(selectedSticker === sticker ? null : sticker);
+                    setSelectedCustomSticker(null);
+                  }}
                   className={`text-2xl p-2 rounded-lg transition-all ${
                     selectedSticker === sticker
                       ? 'ring-2 scale-110'
@@ -231,28 +335,105 @@ export default function SupportersPage() {
               ))}
             </div>
 
-            <div className="relative overflow-hidden rounded-xl border">
-              <textarea
-                placeholder="Votre message de soutien..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={3}
-                className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none relative z-10 bg-white/90"
-                style={{
-                  color: '#0c4a6e',
-              }}
+            {/* Custom Stickers */}
+            {customStickers.length > 0 && (
+              <div className="flex gap-2 flex-wrap mb-3">
+                {customStickers.map((sticker) => (
+                  <button
+                    key={sticker.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCustomSticker(selectedCustomSticker === sticker.url ? null : sticker.url);
+                      setSelectedSticker(null);
+                    }}
+                    className={`w-12 h-12 rounded-lg transition-all overflow-hidden ${
+                      selectedCustomSticker === sticker.url
+                        ? 'ring-2 scale-110'
+                        : 'bg-white/20 hover:bg-white/30'
+                    }`}
+                  >
+                    <img src={sticker.url} alt={sticker.name} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Voice Recording Button */}
+            <div className="flex gap-2 mb-3">
+              {!isRecording && !recordedAudio && (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
+                >
+                  <Mic size={18} />
+                  <span className="text-sm">Enregistrer</span>
+                </button>
+              )}
+              {isRecording && (
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="flex items-center gap-2 px-3 py-2 bg-red-500 rounded-lg text-white hover:bg-red-600 transition-colors"
+                >
+                  <X size={18} />
+                  <span className="text-sm">Arrêter</span>
+                </button>
+              )}
+              {recordedAudio && (
+                <div className="flex items-center gap-2">
+                  <audio src={recordedAudio} controls className="h-8" />
+                  <button
+                    type="button"
+                    onClick={() => setRecordedAudio(null)}
+                    className="p-2 bg-red-500 rounded-lg text-white hover:bg-red-600"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Upload Custom Sticker Button */}
+            <div className="mb-3">
+              <button
+                type="button"
+                onClick={() => setShowStickerUpload(!showStickerUpload)}
+                className="flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
+              >
+                <ImagePlus size={18} />
+                <span className="text-sm">Ajouter un sticker</span>
+              </button>
+              {showStickerUpload && (
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleStickerUpload}
+                    className="text-white text-sm"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Text Input */}
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Écrivez votre message..."
+              className="w-full px-4 py-3 rounded-xl bg-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
+              rows={3}
+              disabled={!!recordedAudio || !!selectedCustomSticker}
             />
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-          </div>
-          <button
-            type="submit"
-            disabled={(!message.trim() && !selectedSticker) || submitting}
-            className="relative overflow-hidden w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            style={{
-              background: `linear-gradient(135deg, ${team?.secondary_color || '#e0f2fe'} 0%, ${team?.primary_color || '#020617'} 50%, ${team?.secondary_color || '#e0f2fe'} 100%)`,
-              borderColor: '#0ea5e9',
-              boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
+
+            <button
+              type="submit"
+              disabled={(!message.trim() && !selectedSticker && !selectedCustomSticker && !recordedAudio) || submitting}
+              className="relative overflow-hidden w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={{
+                background: `linear-gradient(135deg, ${team?.secondary_color || '#e0f2fe'} 0%, ${team?.primary_color || '#020617'} 50%, ${team?.secondary_color || '#e0f2fe'} 100%)`,
+                borderColor: '#0ea5e9',
+                boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
             }}
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
@@ -293,7 +474,13 @@ export default function SupportersPage() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-sky-200">{timeAgo(s.created_at)}</span>
                   </div>
-                  <p className="text-sm text-white leading-relaxed">{s.message}</p>
+                  {s.message_type === 'voice' && s.voice_url && (
+                    <audio src={s.voice_url} controls className="w-full mb-2 h-8" />
+                  )}
+                  {s.message_type === 'sticker' && s.sticker_url && (
+                    <img src={s.sticker_url} alt="Sticker" className="w-24 h-24 object-cover rounded-lg mb-2" />
+                  )}
+                  {s.message && <p className="text-sm text-white leading-relaxed">{s.message}</p>}
                   <p className="text-xs text-sky-200 mt-1">- {s.name}</p>
                 </div>
               </div>
