@@ -312,7 +312,7 @@ export default function EquipePage() {
                       <optgroup label="Historique (matchs passés)">
                         {matches.filter(m => m.status === 'completed').map(m => (
                           <option key={m.id} value={m.id}>
-                            vs {m.opponent} - {m.match_date} ({m.home_score || 0}-{m.away_score || 0})
+                            vs {m.opponent} - {m.match_date} ({m.score_home || 0}-{m.score_away || 0})
                           </option>
                         ))}
                       </optgroup>
