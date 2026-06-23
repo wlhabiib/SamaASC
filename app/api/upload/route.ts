@@ -11,12 +11,14 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const BUCKET_NAME = 'gallery';
+const TEAM_BUCKET_NAME = 'team-assets';
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const teamId = formData.get('team_id') as string;
+    const type = formData.get('type') as string || 'gallery'; // 'gallery' or 'team'
 
     if (!file || !teamId) {
       return NextResponse.json({ error: 'Missing file or team_id' }, { status: 400 });
@@ -27,6 +29,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 });
     }
 
+    // Determine bucket based on type
+    const bucketName = type === 'team' ? TEAM_BUCKET_NAME : BUCKET_NAME;
+
     // Generate unique filename
     const fileExt = file.name.split('.').pop();
     const fileName = `${teamId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
     // Upload to Supabase Storage
     const { data, error } = await supabase
       .storage
-      .from(BUCKET_NAME)
+      .from(bucketName)
       .upload(fileName, file, {
         upsert: true,
         contentType: file.type
@@ -44,11 +49,11 @@ export async function POST(request: NextRequest) {
       console.error('Supabase storage error:', error);
       // Try to create bucket if it doesn't exist
       if (error.message.includes('Bucket not found')) {
-        const { error: createError } = await supabase.storage.createBucket(BUCKET_NAME, {
+        const { error: createError } = await supabase.storage.createBucket(bucketName, {
           public: true,
           fileSizeLimit: 10485760 // 10MB
         });
-        
+
         if (createError) {
           return NextResponse.json({ error: 'Failed to create storage bucket: ' + createError.message }, { status: 500 });
         }
@@ -56,7 +61,7 @@ export async function POST(request: NextRequest) {
         // Retry upload after creating bucket
         const { data: retryData, error: retryError } = await supabase
           .storage
-          .from(BUCKET_NAME)
+          .from(bucketName)
           .upload(fileName, file, {
             upsert: true,
             contentType: file.type
@@ -66,7 +71,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to upload file: ' + retryError.message }, { status: 500 });
         }
 
-        const { data: { publicUrl } } = supabase.storage.from(BUCKET_NAME).getPublicUrl(retryData.path);
+        const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(retryData.path);
         return NextResponse.json({ url: publicUrl, path: retryData.path });
       }
 
@@ -74,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get public URL
-    const { data: { publicUrl } } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
+    const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(data.path);
 
     return NextResponse.json({ url: publicUrl, path: data.path });
   } catch (error) {

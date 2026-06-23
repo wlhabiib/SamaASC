@@ -1460,6 +1460,7 @@ export default function AdminPage() {
 
 // Settings Card Component
 function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: () => void }) {
+  const { refreshTeam } = useTeam();
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
@@ -1520,22 +1521,44 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
 
       // Upload logo if changed
       if (logoFile) {
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(logoFile);
+        const formData = new FormData();
+        formData.append('file', logoFile);
+        formData.append('team_id', team.id);
+        formData.append('type', 'team');
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
         });
-        logoUrl = await base64Promise;
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Logo upload failed');
+        }
+
+        const data = await response.json();
+        logoUrl = data.url;
       }
 
       // Upload team photo if changed
       if (teamPhotoFile) {
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(teamPhotoFile);
+        const formData = new FormData();
+        formData.append('file', teamPhotoFile);
+        formData.append('team_id', team.id);
+        formData.append('type', 'team');
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
         });
-        teamPhotoUrl = await base64Promise;
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Team photo upload failed');
+        }
+
+        const data = await response.json();
+        teamPhotoUrl = data.url;
       }
 
       // Update team via API route
@@ -1566,6 +1589,7 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+      await refreshTeam(true); // Refresh team context to update colors
       loadAll();
     } catch (error) {
       console.error('Error saving team settings:', error);
