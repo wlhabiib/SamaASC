@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Player, Coach, PlayerStat, MatchLineup, Match, POSITION_LABELS } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
@@ -217,7 +218,13 @@ export default function EquipePage() {
             <div className="relative z-10 flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden border-2 border-white/30">
                 {coach.photo_url ? (
-                  <img src={coach.photo_url} alt={coach.name} className="w-full h-full object-cover" />
+                  <Image
+                    src={coach.photo_url}
+                    alt={coach.name}
+                    width={48}
+                    height={48}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <User size={24} className="text-white" />
                 )}
@@ -413,7 +420,14 @@ export default function EquipePage() {
                     <div key={p.id} className="flex flex-col items-center gap-1 min-w-[64px]">
                       <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200">
                         {p.photo_url ? (
-                          <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                          <Image
+                            src={p.photo_url}
+                            alt={p.name}
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
                         ) : (
                           <Shirt size={18} className="text-gray-400" />
                         )}
@@ -447,7 +461,14 @@ export default function EquipePage() {
                   <div className="relative z-10 flex items-center gap-3 w-full">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border-2 relative" style={{ backgroundColor: team?.secondary_color ? `${team.secondary_color}20` : '#dcfce7', borderColor: team?.secondary_color || '#bbf7d0' }}>
                       {player.photo_url ? (
-                        <img src={player.photo_url} alt={player.name} className="w-full h-full object-cover" />
+                        <Image
+                          src={player.photo_url}
+                          alt={player.name}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
                       ) : (
                         <Shirt size={20} style={{ color: team?.secondary_color || '#16a34a' }} />
                       )}

@@ -1,7 +1,8 @@
 'use client';
 
 import { Home, Users, Trophy, Image, ScrollText, Heart, Settings } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useTeam } from '@/contexts/team-context';
 import { useAuthUser } from '@/lib/auth-context';
 
@@ -18,7 +19,6 @@ const NAV_ITEMS = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const { team } = useTeam();
   const { userRole } = useAuthUser();
 
@@ -40,10 +40,10 @@ export default function BottomNav() {
           const isActive = pathname === item.path;
           const Icon = item.icon;
           return (
-            <button
+            <Link
               key={item.path}
-              onClick={() => router.push(item.path)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-300 min-w-[44px] ${
+              href={item.path}
+              className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-300 min-w-[44] ${
                 isActive
                   ? 'scale-105'
                   : 'text-white hover:text-white'
@@ -73,7 +73,7 @@ export default function BottomNav() {
               }`}>
                 {item.label}
               </span>
-            </button>
+            </Link>
           );
         })}
       </div>

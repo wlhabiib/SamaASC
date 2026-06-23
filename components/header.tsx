@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useTeam } from '@/contexts/team-context';
 import { LogOut, User } from 'lucide-react';
 
@@ -32,7 +33,14 @@ export default function Header() {
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
             {team?.logo_url ? (
-              <img src={team.logo_url} alt="Logo" className="w-full h-full object-cover" />
+              <Image
+                src={team.logo_url}
+                alt="Logo"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+                priority
+              />
             ) : (
               <div className="w-full h-full rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-400 to-sky-600">
                 <span className="text-white font-bold text-xs">{team?.name?.substring(0, 2).toUpperCase() || 'SA'}</span>
@@ -45,12 +53,18 @@ export default function Header() {
         {/* User profile photo and logout button */}
         <div className="flex items-center gap-2">
           {/* User profile photo */}
-          <div 
+          <div
             className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden border-2 border-sky-400/30"
             title={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email || 'Utilisateur'}
           >
             {user?.profile_photo_url ? (
-              <img src={user.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+              <Image
+                src={user.profile_photo_url}
+                alt="Profile"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="w-full h-full rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-400 to-sky-600">
                 <User size={16} className="text-white" />

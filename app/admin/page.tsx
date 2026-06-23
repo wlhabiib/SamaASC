@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Player, Match, Announcement, Standing, GalleryItem, Coach, PlayerStat, MatchLineup, Competition, User, POSITION_LABELS } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import FileUpload from '@/components/file-upload';
@@ -1354,7 +1355,14 @@ export default function AdminPage() {
                     {g.type === 'video' ? (
                       <video src={g.url} className="w-full h-full object-cover" muted />
                     ) : (
-                      <img src={g.url} alt={g.caption || ''} className="w-full h-full object-cover" />
+                      <Image
+                        src={g.url}
+                        alt={g.caption || ''}
+                        width={200}
+                        height={200}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
                     )}
                   </div>
                   {g.type === 'video' && (

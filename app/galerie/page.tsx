@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { GalleryItem } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
@@ -126,10 +127,13 @@ export default function GaleriePage() {
               {item.type === 'video' ? (
                 <video src={item.url} className="w-full h-full object-cover" muted />
               ) : (
-                <img
+                <Image
                   src={item.url}
                   alt={item.caption || ''}
+                  width={200}
+                  height={200}
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
