@@ -30,8 +30,8 @@ export default function ResultatsPage() {
   const [voteError, setVoteError] = useState<string>('');
   const [localVotes, setLocalVotes] = useState<MatchVote[]>([]);
 
+  // Authentication check - must be before early return
   useEffect(() => {
-    // Check authentication
     if (!contextLoading) {
       if (!team) {
         router.push('/login');
@@ -44,6 +44,7 @@ export default function ResultatsPage() {
     }
   }, [team, user, contextLoading, router]);
 
+  // Data loading
   useEffect(() => {
     async function load() {
       if (!team) return;

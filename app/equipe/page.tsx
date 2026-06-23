@@ -64,8 +64,8 @@ export default function EquipePage() {
   const [selectedMatchId, setSelectedMatchId] = useState<string>('');
   const [selectedFormation, setSelectedFormation] = useState<string>('4-3-3');
 
+  // Authentication check - must be before early return
   useEffect(() => {
-    // Check authentication
     if (!contextLoading) {
       if (!team) {
         router.push('/login');
@@ -78,6 +78,7 @@ export default function EquipePage() {
     }
   }, [team, user, contextLoading, router]);
 
+  // Data loading
   useEffect(() => {
     async function load() {
       if (!team) return;

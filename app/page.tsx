@@ -43,6 +43,34 @@ export default function AccueilPage() {
   const [userCount, setUserCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Authentication check - must be before early return
+  useEffect(() => {
+    console.log('🔐 Vérification authentification page d\'accueil');
+    console.log('   contextLoading:', contextLoading);
+    console.log('   team:', team?.name || 'null');
+    console.log('   user:', user?.email || 'null');
+
+    if (contextLoading) {
+      console.log('⏳ Contexte en cours de chargement...');
+      return;
+    }
+
+    if (!team) {
+      console.log('❌ Pas de team trouvée, redirection vers /login');
+      router.push('/login');
+      return;
+    }
+
+    if (!user) {
+      console.log('⚠️ Team trouvée mais pas de user, redirection vers /user-login');
+      router.push('/user-login');
+      return;
+    }
+
+    console.log('✅ Authentification OK, team:', team.name);
+  }, [team, user, contextLoading, router]);
+
+  // Data loading
   useEffect(() => {
     async function load() {
       if (!team) return;
@@ -82,36 +110,6 @@ export default function AccueilPage() {
   }, [team, contextLoading]);
 
   const upcomingMatches = allMatches.filter(m => m.status === 'upcoming' || m.status === 'live');
-
-  useEffect(() => {
-    // Check authentication
-    console.log('🔐 Vérification authentification page d\'accueil');
-    console.log('   contextLoading:', contextLoading);
-    console.log('   team:', team?.name || 'null');
-    console.log('   user:', user?.email || 'null');
-    
-    // Wait for context to finish loading before making decisions
-    if (contextLoading) {
-      console.log('⏳ Contexte en cours de chargement...');
-      return;
-    }
-    
-    // If context finished loading and still no team, redirect
-    if (!team) {
-      console.log('❌ Pas de team trouvée, redirection vers /login');
-      router.push('/login');
-      return;
-    }
-    
-    // If team found but no user (shouldn't happen for admin)
-    if (!user) {
-      console.log('⚠️ Team trouvée mais pas de user, redirection vers /user-login');
-      router.push('/user-login');
-      return;
-    }
-    
-    console.log('✅ Authentification OK, team:', team.name);
-  }, [team, user, contextLoading, router]);
 
   if (loading || contextLoading) {
     return (

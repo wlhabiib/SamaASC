@@ -23,8 +23,8 @@ export default function SupportersPage() {
 
   const STICKERS = ['⚽', '🔥', '💪', '🎉', '👏', '❤️', '⭐', '🏆', '🚀', '💯'];
 
+  // Authentication check - must be before early return
   useEffect(() => {
-    // Check authentication
     if (!contextLoading) {
       if (!team) {
         router.push('/login');
@@ -37,6 +37,7 @@ export default function SupportersPage() {
     }
   }, [team, user, contextLoading, router]);
 
+  // Data loading
   useEffect(() => {
     async function load() {
       if (!team) return;

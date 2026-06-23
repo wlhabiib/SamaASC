@@ -16,8 +16,8 @@ export default function GaleriePage() {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [filter, setFilter] = useState<string>('all');
 
+  // Authentication check - must be before early return
   useEffect(() => {
-    // Check authentication
     if (!contextLoading) {
       if (!team) {
         router.push('/login');
@@ -30,6 +30,7 @@ export default function GaleriePage() {
     }
   }, [team, user, contextLoading, router]);
 
+  // Data loading
   useEffect(() => {
     async function load() {
       if (!team) return;

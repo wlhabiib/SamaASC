@@ -16,8 +16,8 @@ export default function ClassementPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCompetition, setSelectedCompetition] = useState<string>('');
 
+  // Authentication check - must be before early return
   useEffect(() => {
-    // Check authentication
     if (!contextLoading) {
       if (!team) {
         router.push('/login');
@@ -30,6 +30,7 @@ export default function ClassementPage() {
     }
   }, [team, user, contextLoading, router]);
 
+  // Data loading
   useEffect(() => {
     async function load() {
       if (!team) return;
