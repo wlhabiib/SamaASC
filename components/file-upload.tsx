@@ -30,17 +30,19 @@ export default function FileUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size - reduced to 2MB to avoid Vercel request size limits
-    if (file.size > maxSize * 1024 * 1024) {
-      setError(`Fichier trop volumineux (max ${maxSize}MB)`);
+    // Determine file type first to check appropriate size limit
+    const isVideo = file.type.startsWith('video/');
+    const actualMaxSize = isVideo ? 10 : maxSize; // 10MB for videos, 2MB for images
+
+    // Check file size
+    if (file.size > actualMaxSize * 1024 * 1024) {
+      setError(`Fichier trop volumineux (max ${actualMaxSize}MB)`);
       return;
     }
 
     setError('');
     setUploading(true);
 
-    // Determine file type
-    const isVideo = file.type.startsWith('video/');
     setFileType(isVideo ? 'video' : 'image');
     if (onTypeChange) {
       onTypeChange(isVideo ? 'video' : 'image');

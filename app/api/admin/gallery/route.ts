@@ -20,8 +20,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if URL is too long (Base64 data can be very large)
-    if (url.length > 10000000) { // 10MB limit
-      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 });
+    // 10MB for videos, 2MB for images (Base64 is ~33% larger)
+    if (type === 'video' && url.length > 15000000) { // ~10MB video in Base64
+      return NextResponse.json({ error: 'Video too large. Maximum size is 10MB.' }, { status: 400 });
+    }
+    if (type === 'image' && url.length > 3000000) { // ~2MB image in Base64
+      return NextResponse.json({ error: 'Image too large. Maximum size is 2MB.' }, { status: 400 });
     }
 
     console.log('Gallery POST request:', { type, urlLength: url.length, caption, event_type, team_id });
