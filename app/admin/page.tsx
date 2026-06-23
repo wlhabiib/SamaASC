@@ -8,7 +8,7 @@ import AppShell from '@/components/app-shell';
 import FileUpload from '@/components/file-upload';
 import { useTeam } from '@/contexts/team-context';
 import { useAuthUser } from '@/lib/auth-context';
-import { Users, Calendar, Megaphone, Trophy, Image, Settings, Plus, Trash2, Edit2, Save, X, ChevronDown, Target, Shirt, Check, Play, ShieldAlert, Upload } from 'lucide-react';
+import { Users, Calendar, Megaphone, Trophy, Image as ImageIcon, Settings, Plus, Trash2, Edit2, Save, X, ChevronDown, Target, Shirt, Check, Play, ShieldAlert, Upload } from 'lucide-react';
 
 type Tab = 'players' | 'matches' | 'lineup' | 'announcements' | 'standings' | 'gallery' | 'coach' | 'stats' | 'competitions' | 'users' | 'settings';
 
@@ -20,7 +20,7 @@ const TAB_CONFIG: { key: Tab; label: string; icon: typeof Users }[] = [
   { key: 'announcements', label: 'Annonces', icon: Megaphone },
   { key: 'standings', label: 'Compétition', icon: Trophy },
   { key: 'stats', label: 'Stats', icon: Target },
-  { key: 'gallery', label: 'Galerie', icon: Image },
+  { key: 'gallery', label: 'Galerie', icon: ImageIcon },
   { key: 'competitions', label: 'Gestion Compétitions', icon: Trophy },
   { key: 'users', label: 'Gestion Utilisateurs', icon: Users },
   { key: 'settings', label: 'Paramètres', icon: Settings },
