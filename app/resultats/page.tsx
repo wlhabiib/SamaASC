@@ -193,7 +193,7 @@ export default function ResultatsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-black drop-shadow-md">Résultats</h1>
-            <p className="text-sm text-gray-800 drop-shadow-sm">Matchs terminés et votes</p>
+            <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Matchs terminés et votes</p>
           </div>
         </div>
 

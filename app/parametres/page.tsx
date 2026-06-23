@@ -283,7 +283,7 @@ export default function ParametresPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-black drop-shadow-md">Paramètres</h1>
-            <p className="text-sm text-gray-800 drop-shadow-sm">Personnalisation de l'équipe</p>
+            <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Personnalisation de l'équipe</p>
           </div>
         </div>
 

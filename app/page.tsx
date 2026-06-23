@@ -164,7 +164,7 @@ export default function AccueilPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-black drop-shadow-md">Accueil</h1>
-            <p className="text-sm text-gray-800 drop-shadow-sm">Bienvenue sur {team?.name || 'votre ASC'}</p>
+            <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Bienvenue sur {team?.name || 'votre ASC'}</p>
           </div>
         </div>
 

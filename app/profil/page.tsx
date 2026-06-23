@@ -115,8 +115,9 @@ export default function ProfilPage() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Reload user data
-      window.location.reload();
+      // Reset file input
+      setProfilePhotoFile(null);
+      setProfilePhotoPreview(null);
     } catch (error) {
       console.error('Error saving profile:', error);
       alert('Erreur lors de la sauvegarde: ' + (error as Error).message);
@@ -156,7 +157,7 @@ export default function ProfilPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-black drop-shadow-md">Mon Profil</h1>
-            <p className="text-sm text-gray-800 drop-shadow-sm">Informations personnelles</p>
+            <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Informations personnelles</p>
           </div>
         </div>
 

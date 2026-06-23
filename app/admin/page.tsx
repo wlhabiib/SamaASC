@@ -673,7 +673,7 @@ export default function AdminPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-black drop-shadow-md">Administration</h1>
-            <p className="text-sm text-gray-800 drop-shadow-sm">Gestion de l'équipe</p>
+            <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Gestion de l'équipe</p>
           </div>
         </div>
 

@@ -218,7 +218,7 @@ export default function EquipePage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-black drop-shadow-md">Mon Équipe</h1>
-            <p className="text-sm text-gray-800 drop-shadow-sm">Joueurs et composition</p>
+            <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Joueurs et composition</p>
           </div>
         </div>
 
@@ -283,7 +283,7 @@ export default function EquipePage() {
         {view === 'field' && (
           <>
             {/* Match selector */}
-            {upcomingMatches.length > 0 && (
+            {matches.length > 0 && (
               <div className="space-y-2">
                 <div className="relative">
                   <select
@@ -299,11 +299,24 @@ export default function EquipePage() {
                     }}
                   >
                     <option value="">Selectionner un match</option>
-                    {upcomingMatches.map(m => (
-                      <option key={m.id} value={m.id}>
-                        vs {m.opponent} - {m.match_date}
-                      </option>
-                    ))}
+                    {matches.length > 0 && (
+                      <optgroup label="Matchs à venir">
+                        {matches.filter(m => m.status === 'upcoming').map(m => (
+                          <option key={m.id} value={m.id}>
+                            vs {m.opponent} - {m.match_date}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {matches.length > 0 && (
+                      <optgroup label="Historique (matchs passés)">
+                        {matches.filter(m => m.status === 'completed').map(m => (
+                          <option key={m.id} value={m.id}>
+                            vs {m.opponent} - {m.match_date} ({m.home_score || 0}-{m.away_score || 0})
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                   <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>

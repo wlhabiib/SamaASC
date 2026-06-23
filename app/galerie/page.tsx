@@ -98,7 +98,7 @@ export default function GaleriePage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-black drop-shadow-md">Galerie</h1>
-            <p className="text-sm text-gray-800 drop-shadow-sm">Photos et vidéos</p>
+            <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Photos et vidéos</p>
           </div>
         </div>
 

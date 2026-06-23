@@ -106,7 +106,7 @@ export default function ClassementPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-black drop-shadow-md">Classement</h1>
-            <p className="text-sm text-gray-800 drop-shadow-sm">Position en compétition</p>
+            <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Position en compétition</p>
           </div>
         </div>
 
