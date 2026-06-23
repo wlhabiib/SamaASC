@@ -200,12 +200,30 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       setTeam(null);
       setTeamUser(null);
       setCurrentUser(null);
-      // Nettoyer localStorage
-      localStorage.removeItem('supabase.auth.token');
+      
+      // Nettoyer TOUTES les clés Supabase dans localStorage
+      if (typeof window !== 'undefined') {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') && key.includes('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        });
+        localStorage.removeItem('supabase.auth.token');
+      }
+      
       // Redirection forcée
       window.location.href = '/login';
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
+      // Nettoyer localStorage même en cas d'erreur
+      if (typeof window !== 'undefined') {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') && key.includes('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        });
+        localStorage.removeItem('supabase.auth.token');
+      }
       // Même en cas d'erreur, forcer la redirection
       window.location.href = '/login';
     }
