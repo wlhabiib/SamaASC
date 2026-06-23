@@ -57,11 +57,8 @@ export default function Header() {
           {/* Logout button */}
           <button
             onClick={() => {
-              logout();
-              // Force la redirection immédiate
-              setTimeout(() => {
-                window.location.href = '/login';
-              }, 100);
+              // Rediriger vers la page de déconnexion serveur
+              window.location.href = '/logout';
             }}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors border border-transparent hover:border-sky-400/30"
             title="Déconnexion"
