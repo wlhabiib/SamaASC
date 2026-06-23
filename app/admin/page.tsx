@@ -7,9 +7,9 @@ import AppShell from '@/components/app-shell';
 import FileUpload from '@/components/file-upload';
 import { useTeam } from '@/contexts/team-context';
 import { useAuthUser } from '@/lib/auth-context';
-import { Users, Calendar, Megaphone, Trophy, Image, Settings, Plus, Trash2, Edit2, Save, X, ChevronDown, Target, Shirt, Check, Play, ShieldAlert } from 'lucide-react';
+import { Users, Calendar, Megaphone, Trophy, Image, Settings, Plus, Trash2, Edit2, Save, X, ChevronDown, Target, Shirt, Check, Play, ShieldAlert, Upload } from 'lucide-react';
 
-type Tab = 'players' | 'matches' | 'lineup' | 'announcements' | 'standings' | 'gallery' | 'coach' | 'stats' | 'competitions' | 'users';
+type Tab = 'players' | 'matches' | 'lineup' | 'announcements' | 'standings' | 'gallery' | 'coach' | 'stats' | 'competitions' | 'users' | 'settings';
 
 const TAB_CONFIG: { key: Tab; label: string; icon: typeof Users }[] = [
   { key: 'coach', label: 'Coach', icon: Settings },
@@ -22,6 +22,7 @@ const TAB_CONFIG: { key: Tab; label: string; icon: typeof Users }[] = [
   { key: 'gallery', label: 'Galerie', icon: Image },
   { key: 'competitions', label: 'Gestion Compétitions', icon: Trophy },
   { key: 'users', label: 'Gestion Utilisateurs', icon: Users },
+  { key: 'settings', label: 'Paramètres', icon: Settings },
 ];
 
 // Move Input and Select components outside to prevent re-render on every keystroke
@@ -1438,7 +1439,320 @@ export default function AdminPage() {
             </div>
           </>
         )}
+
+        {/* SETTINGS TAB */}
+        {tab === 'settings' && <SettingsCard team={team} user={user} loadAll={loadAll} />}
       </div>
     </AppShell>
+  );
+}
+
+// Settings Card Component
+function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: () => void }) {
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [description, setDescription] = useState('');
+  const [primaryColor, setPrimaryColor] = useState('#020617');
+  const [secondaryColor, setSecondaryColor] = useState('#e0f2fe');
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (team) {
+      setName(team.name);
+      setSlug(team.slug);
+      setDescription(team.description || '');
+      setPrimaryColor(team.primary_color || '#020617');
+      setSecondaryColor(team.secondary_color || '#e0f2fe');
+      setProfilePhotoPreview(user?.profile_photo_url || null);
+    }
+  }, [team, user]);
+
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!team) return;
+    
+    setSaving(true);
+    setSuccess(false);
+
+    try {
+      let profilePhotoUrl = user?.profile_photo_url || null;
+
+      if (profilePhotoFile) {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(profilePhotoFile);
+        });
+        profilePhotoUrl = await base64Promise;
+      }
+
+      if (profilePhotoUrl !== user?.profile_photo_url && user) {
+        await fetch('/api/admin/profile-photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.user_id,
+            team_id: team.id,
+            profile_photo_url: profilePhotoUrl
+          }),
+        });
+      }
+
+      const response = await fetch('/api/admin/team', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: team.id,
+          name,
+          slug,
+          description,
+          primary_color: primaryColor,
+          secondary_color: secondaryColor,
+          accent_color: primaryColor,
+          nav_color: primaryColor,
+          logo_url: team.logo_url,
+          team_photo_url: team.team_photo_url,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update team');
+      }
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+      loadAll();
+    } catch (error) {
+      console.error('Error saving team settings:', error);
+      alert('Erreur lors de la sauvegarde: ' + (error as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {success && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl">
+          <Check size={20} className="text-green-600" />
+          <span className="text-green-700 font-medium">Paramètres sauvegardés avec succès</span>
+        </div>
+      )}
+
+      {/* Profile Photo Upload */}
+      <div className="rounded-2xl shadow-lg p-5 relative overflow-hidden" style={{
+        background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 50%, ${secondaryColor} 100%)`,
+        borderColor: '#0ea5e9',
+        boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
+      }}>
+        <div className="absolute top-0 right-0 w-24 h-24 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+        <div className="relative z-10">
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Settings size={20} className="text-white" />
+            Photo de profil
+          </h2>
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden border-2 border-dashed border-white/30">
+              {profilePhotoPreview ? (
+                <img src={profilePhotoPreview} alt="Photo de profil" className="w-full h-full object-cover" />
+              ) : (
+                <Users size={32} className="text-white/70" />
+              )}
+            </div>
+            <div className="flex-1">
+              <input
+                type="file"
+                id="profile-photo-upload"
+                accept="image/*"
+                onChange={handleProfilePhotoChange}
+                className="hidden"
+              />
+              <label
+                htmlFor="profile-photo-upload"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-white/30 transition-colors cursor-pointer border border-white/30"
+              >
+                <Upload size={18} />
+                Choisir une photo
+              </label>
+              <p className="text-xs text-white/70 mt-2">
+                Formats acceptés: JPG, PNG, GIF (max 5MB)
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Team Info */}
+      <div className="rounded-2xl shadow-lg p-5 relative overflow-hidden" style={{
+        background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 50%, ${secondaryColor} 100%)`,
+        borderColor: '#0ea5e9',
+        boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
+      }}>
+        <div className="absolute top-0 right-0 w-24 h-24 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+        <div className="relative z-10">
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Settings size={20} className="text-white" />
+            Informations de l'équipe
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/90 mb-1">
+                Nom de l'ASC
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl border border-white/30 px-3 py-2.5 text-sm bg-white/20 backdrop-blur-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/50"
+                placeholder="Ex: ASC Diambars"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/90 mb-1">
+                Slug (identifiant unique)
+              </label>
+              <input
+                type="text"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                className="w-full rounded-xl border border-white/30 px-3 py-2.5 text-sm bg-white/20 backdrop-blur-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/50"
+                placeholder="Ex: asc-diambars"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/90 mb-1">
+                Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                className="w-full rounded-xl border border-white/30 px-3 py-2.5 text-sm bg-white/20 backdrop-blur-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/50 resize-none"
+                placeholder="Décrivez votre équipe..."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Colors */}
+      <div className="rounded-2xl shadow-lg p-5 relative overflow-hidden" style={{
+        background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 50%, ${secondaryColor} 100%)`,
+        borderColor: '#0ea5e9',
+        boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
+      }}>
+        <div className="absolute top-0 right-0 w-24 h-24 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+        <div className="relative z-10">
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Settings size={20} className="text-white" />
+            Couleurs de l'équipe
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/90 mb-2">
+                Couleur Premium (dégradé foncé)
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div
+                    className="w-16 h-16 rounded-xl shadow-md"
+                    style={{ backgroundColor: primaryColor }}
+                  />
+                  {primaryColor === '#020617' && (
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md">
+                      <Check size={12} className="text-green-600" />
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="color"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white/30"
+                />
+                <button
+                  onClick={() => setPrimaryColor('#020617')}
+                  className="px-3 py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors border border-white/30"
+                >
+                  Réinitialiser
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/90 mb-2">
+                Couleur Bleu Clair (dégradé clair)
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div
+                    className="w-16 h-16 rounded-xl shadow-md"
+                    style={{ backgroundColor: secondaryColor }}
+                  />
+                  {secondaryColor === '#e0f2fe' && (
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md">
+                      <Check size={12} className="text-green-600" />
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="color"
+                  value={secondaryColor}
+                  onChange={(e) => setSecondaryColor(e.target.value)}
+                  className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white/30"
+                />
+                <button
+                  onClick={() => setSecondaryColor('#e0f2fe')}
+                  className="px-3 py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors border border-white/30"
+                >
+                  Réinitialiser
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="flex items-center justify-center gap-2 px-4 py-3 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden w-full"
+        style={{
+          background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 50%, ${secondaryColor} 100%)`,
+          borderColor: '#0ea5e9',
+          boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
+        }}
+      >
+        {saving ? (
+          <>
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            Sauvegarde...
+          </>
+        ) : (
+          <>
+            <Save size={18} />
+            Sauvegarder
+          </>
+        )}
+      </button>
+    </div>
   );
 }

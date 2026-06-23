@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Supporter } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { Heart, Send, Flame, MessageCircle, Mic, ImagePlus, X, Play } from 'lucide-react';
+import { Heart, Send, Flame, MessageCircle, Mic, ImagePlus, X, Play, Smile, Paperclip } from 'lucide-react';
 
 export default function SupportersPage() {
   const router = useRouter();
@@ -20,6 +20,8 @@ export default function SupportersPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
   const [selectedCustomSticker, setSelectedCustomSticker] = useState<string | null>(null);
+  const [showStickerPanel, setShowStickerPanel] = useState(false);
+  const [showEmojiPanel, setShowEmojiPanel] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -297,8 +299,8 @@ export default function SupportersPage() {
           </div>
         </div>
 
-        {/* Post Form */}
-        <form onSubmit={handleSubmit} className="rounded-2xl p-4 shadow-lg space-y-3 relative overflow-hidden" style={{
+        {/* Post Form - WhatsApp Style */}
+        <div className="rounded-2xl p-4 shadow-lg relative overflow-hidden" style={{
           background: 'linear-gradient(135deg, #e0f2fe 0%, #0ea5e9 50%, #0284c7 100%)',
           borderColor: '#0ea5e9',
           boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
@@ -306,145 +308,179 @@ export default function SupportersPage() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-3">
               <MessageCircle size={16} className="text-white" />
               <span className="text-sm font-bold text-white">Votre message</span>
             </div>
 
-            {/* Sticker Picker */}
-            <div className="flex gap-2 flex-wrap mb-3">
-              {STICKERS.map((sticker) => (
-                <button
-                  key={sticker}
-                  type="button"
-                  onClick={() => {
-                    setSelectedSticker(selectedSticker === sticker ? null : sticker);
-                    setSelectedCustomSticker(null);
-                  }}
-                  className={`text-2xl p-2 rounded-lg transition-all ${
-                    selectedSticker === sticker
-                      ? 'ring-2 scale-110'
-                      : 'bg-white/20 hover:bg-white/30'
-                  }`}
-                  style={{
-                    backgroundColor: selectedSticker === sticker ? 'rgba(255, 255, 255, 0.3)' : undefined,
-                  } as React.CSSProperties}
-                >
-                  {sticker}
-                </button>
-              ))}
-            </div>
-
-            {/* Custom Stickers */}
-            {customStickers.length > 0 && (
-              <div className="flex gap-2 flex-wrap mb-3">
-                {customStickers.map((sticker) => (
-                  <button
-                    key={sticker.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCustomSticker(selectedCustomSticker === sticker.url ? null : sticker.url);
-                      setSelectedSticker(null);
-                    }}
-                    className={`w-12 h-12 rounded-lg transition-all overflow-hidden ${
-                      selectedCustomSticker === sticker.url
-                        ? 'ring-2 scale-110'
-                        : 'bg-white/20 hover:bg-white/30'
-                    }`}
-                  >
-                    <img src={sticker.url} alt={sticker.name} className="w-full h-full object-cover" />
-                  </button>
-                ))}
+            {/* Emoji Panel */}
+            {showEmojiPanel && (
+              <div className="mb-3 p-3 bg-white/20 rounded-xl">
+                <div className="flex gap-2 flex-wrap">
+                  {STICKERS.map((sticker) => (
+                    <button
+                      key={sticker}
+                      type="button"
+                      onClick={() => {
+                        setSelectedSticker(selectedSticker === sticker ? null : sticker);
+                        setSelectedCustomSticker(null);
+                      }}
+                      className={`text-2xl p-2 rounded-lg transition-all ${
+                        selectedSticker === sticker
+                          ? 'ring-2 scale-110'
+                          : 'hover:bg-white/30'
+                      }`}
+                      style={{
+                        backgroundColor: selectedSticker === sticker ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                      } as React.CSSProperties}
+                    >
+                      {sticker}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Voice Recording Button */}
-            <div className="flex gap-2 mb-3">
-              {!isRecording && !recordedAudio && (
-                <button
-                  type="button"
-                  onClick={startRecording}
-                  className="flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
-                >
-                  <Mic size={18} />
-                  <span className="text-sm">Enregistrer</span>
-                </button>
-              )}
-              {isRecording && (
-                <button
-                  type="button"
-                  onClick={stopRecording}
-                  className="flex items-center gap-2 px-3 py-2 bg-red-500 rounded-lg text-white hover:bg-red-600 transition-colors"
-                >
-                  <X size={18} />
-                  <span className="text-sm">Arrêter</span>
-                </button>
-              )}
-              {recordedAudio && (
-                <div className="flex items-center gap-2">
-                  <audio src={recordedAudio} controls className="h-8" />
+            {/* Sticker Panel */}
+            {showStickerPanel && (
+              <div className="mb-3 p-3 bg-white/20 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white text-sm font-medium">Stickers personnalisés</span>
                   <button
                     type="button"
-                    onClick={() => setRecordedAudio(null)}
-                    className="p-2 bg-red-500 rounded-lg text-white hover:bg-red-600"
+                    onClick={() => setShowStickerUpload(!showStickerUpload)}
+                    className="flex items-center gap-1 px-2 py-1 bg-white/30 rounded-lg text-white text-xs hover:bg-white/40"
                   >
-                    <X size={16} />
+                    <ImagePlus size={14} />
+                    Ajouter
                   </button>
                 </div>
-              )}
-            </div>
-
-            {/* Upload Custom Sticker Button */}
-            <div className="mb-3">
-              <button
-                type="button"
-                onClick={() => setShowStickerUpload(!showStickerUpload)}
-                className="flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
-              >
-                <ImagePlus size={18} />
-                <span className="text-sm">Ajouter un sticker</span>
-              </button>
-              {showStickerUpload && (
-                <div className="mt-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleStickerUpload}
-                    className="text-white text-sm"
-                  />
+                {showStickerUpload && (
+                  <div className="mb-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleStickerUpload}
+                      className="text-white text-xs"
+                    />
+                  </div>
+                )}
+                <div className="flex gap-2 flex-wrap">
+                  {customStickers.length > 0 ? (
+                    customStickers.map((sticker) => (
+                      <button
+                        key={sticker.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCustomSticker(selectedCustomSticker === sticker.url ? null : sticker.url);
+                          setSelectedSticker(null);
+                        }}
+                        className={`w-12 h-12 rounded-lg transition-all overflow-hidden ${
+                          selectedCustomSticker === sticker.url
+                            ? 'ring-2 scale-110'
+                            : 'hover:bg-white/30'
+                        }`}
+                      >
+                        <img src={sticker.url} alt={sticker.name} className="w-full h-full object-cover" />
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-white/70 text-xs">Aucun sticker personnalisé</p>
+                  )}
                 </div>
+              </div>
+            )}
+
+            {/* Voice Recording Preview */}
+            {recordedAudio && (
+              <div className="mb-3 p-3 bg-white/20 rounded-xl flex items-center gap-2">
+                <audio src={recordedAudio} controls className="flex-1 h-8" />
+                <button
+                  type="button"
+                  onClick={() => setRecordedAudio(null)}
+                  className="p-2 bg-red-500 rounded-lg text-white hover:bg-red-600"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+
+            {/* WhatsApp-style Input Bar */}
+            <form onSubmit={handleSubmit} className="flex items-end gap-2">
+              <div className="flex gap-1">
+                {/* Emoji Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEmojiPanel(!showEmojiPanel);
+                    setShowStickerPanel(false);
+                  }}
+                  className="p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors"
+                >
+                  <Smile size={20} />
+                </button>
+
+                {/* Sticker/Attachment Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStickerPanel(!showStickerPanel);
+                    setShowEmojiPanel(false);
+                  }}
+                  className="p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors"
+                >
+                  <Paperclip size={20} />
+                </button>
+              </div>
+
+              {/* Text Input */}
+              <div className="flex-1">
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Écrivez votre message..."
+                  className="w-full px-4 py-3 rounded-xl bg-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
+                  rows={1}
+                  disabled={!!recordedAudio || !!selectedCustomSticker}
+                  style={{ minHeight: '48px' }}
+                />
+              </div>
+
+              {/* Voice/Send Button */}
+              {!message.trim() && !selectedSticker && !selectedCustomSticker && !recordedAudio ? (
+                isRecording ? (
+                  <button
+                    type="button"
+                    onClick={stopRecording}
+                    className="p-3 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    className="p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors"
+                  >
+                    <Mic size={20} />
+                  </button>
+                )
+              ) : (
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="p-3 bg-gradient-to-r from-sky-400 to-sky-600 rounded-full text-white hover:from-sky-500 hover:to-sky-700 transition-colors disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send size={20} />
+                  )}
+                </button>
               )}
-            </div>
-
-            {/* Text Input */}
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Écrivez votre message..."
-              className="w-full px-4 py-3 rounded-xl bg-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
-              rows={3}
-              disabled={!!recordedAudio || !!selectedCustomSticker}
-            />
-
-            <button
-              type="submit"
-              disabled={(!message.trim() && !selectedSticker && !selectedCustomSticker && !recordedAudio) || submitting}
-              className="relative overflow-hidden w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{
-                background: `linear-gradient(135deg, ${team?.secondary_color || '#e0f2fe'} 0%, ${team?.primary_color || '#020617'} 50%, ${team?.secondary_color || '#e0f2fe'} 100%)`,
-                borderColor: '#0ea5e9',
-                boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
-            }}
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-            <div className="relative z-10 flex items-center justify-center gap-2">
-              <Send size={16} />
-              {submitting ? 'Envoi...' : 'Envoyer'}
-            </div>
-          </button>
+            </form>
           </div>
-        </form>
+        </div>
 
         {/* Messages */}
         <div className="space-y-3">
