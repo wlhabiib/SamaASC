@@ -53,60 +53,55 @@ export default function ProfilPage() {
 
   const handleSave = async () => {
     if (!team || !user) return;
-    
+
     setSaving(true);
     setSuccess(false);
 
     try {
-      let profilePhotoUrl = null;
+      let profilePhotoUrl = user.profile_photo_url || null;
 
-      // Upload profile photo if changed - DISABLED (Supabase removed)
-      // if (profilePhotoFile && supabase) {
-      //   try {
-      //     const fileExt = profilePhotoFile.name.split('.').pop();
-      //     const fileName = `${user.id}-profile-${Date.now()}.${fileExt}`;
-      //     const filePath = `user-profiles/${fileName}`;
+      // Upload profile photo if changed using Base64
+      if (profilePhotoFile) {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(profilePhotoFile);
+        });
+        profilePhotoUrl = await base64Promise;
+      }
 
-      //     console.log('Uploading profile photo to:', filePath);
-          
-      //     const { error: uploadError } = await supabase.storage
-      //       .from('team-assets')
-      //       .upload(filePath, profilePhotoFile);
+      // Update profile photo via API
+      if (profilePhotoUrl !== user.profile_photo_url) {
+        const photoResponse = await fetch('/api/admin/profile-photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.user_id,
+            team_id: team.id,
+            profile_photo_url: profilePhotoUrl
+          }),
+        });
 
-      //     if (uploadError) {
-      //       console.error('Upload error:', uploadError);
-      //       throw new Error(`Upload failed: ${uploadError.message}`);
-      //     }
+        if (!photoResponse.ok) {
+          const photoError = await photoResponse.json();
+          throw new Error(photoError.error || 'Failed to update profile photo');
+        }
+      }
 
-      //     const { data: { publicUrl } } = supabase.storage
-      //       .from('team-assets')
-      //       .getPublicUrl(filePath);
+      // Update user name via API route
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
 
-      //     profilePhotoUrl = publicUrl;
-      //     console.log('Photo uploaded successfully:', profilePhotoUrl);
-      //   } catch (uploadErr) {
-      //     console.error('Photo upload error:', uploadErr);
-      //     throw uploadErr;
-      //   }
-      // }
-      
-      // Keep existing profile photo since upload is disabled
-      profilePhotoUrl = null;
-
-      // Update user profile via API route
-      const payload = {
-        id: user.id,
-        team_id: team.id,
-        name,
-        profile_photo_url: profilePhotoUrl,
-      };
-      
-      console.log('Sending profile update with payload:', payload);
-      
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          user_id: user.user_id,
+          team_id: team.id,
+          first_name: firstName,
+          last_name: lastName,
+        }),
       });
 
       console.log('Profile API response status:', response.status);
@@ -119,13 +114,9 @@ export default function ProfilPage() {
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-      
-      // Update user context with new data
-      const updatedUser = {
-        ...user,
-        name,
-        profile_photo_url: profilePhotoUrl,
-      };
+
+      // Reload user data
+      window.location.reload();
     } catch (error) {
       console.error('Error saving profile:', error);
       alert('Erreur lors de la sauvegarde: ' + (error as Error).message);

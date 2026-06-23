@@ -1528,26 +1528,33 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
       }
 
       // Update team via API route
+      const payload = {
+        id: team.id,
+        name,
+        slug,
+        description,
+        primary_color: primaryColor,
+        secondary_color: secondaryColor,
+        accent_color: primaryColor,
+        nav_color: primaryColor,
+        logo_url: logoUrl,
+        team_photo_url: teamPhotoUrl,
+      };
+
+      console.log('Sending team update payload:', payload);
+
       const response = await fetch('/api/admin/team', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: team.id,
-          name,
-          slug,
-          description,
-          primary_color: primaryColor,
-          secondary_color: secondaryColor,
-          accent_color: primaryColor,
-          nav_color: primaryColor,
-          logo_url: logoUrl,
-          team_photo_url: teamPhotoUrl,
-        }),
+        body: JSON.stringify(payload),
       });
 
+      console.log('Team API response status:', response.status);
+      const responseData = await response.json();
+      console.log('Team API response:', responseData);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update team');
+        throw new Error(responseData.error || 'Failed to update team');
       }
 
       setSuccess(true);

@@ -7,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function PUT(request: NextRequest) {
   try {
-    const { user_id, team_id, first_name, last_name, profile_photo_url } = await request.json();
+    const { user_id, team_id, first_name, last_name } = await request.json();
 
     if (!user_id || !team_id) {
       return NextResponse.json(
@@ -21,7 +21,6 @@ export async function PUT(request: NextRequest) {
       .update({
         first_name,
         last_name,
-        profile_photo_url,
       })
       .eq('user_id', user_id)
       .eq('team_id', team_id)
