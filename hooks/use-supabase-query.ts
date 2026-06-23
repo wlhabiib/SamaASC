@@ -17,9 +17,10 @@ export function useSupabaseQuery<T>(
     dedupingInterval?: number;
   }
 ) {
-  const fetcher = async () => {
+  const fetcher = async (): Promise<T> => {
     const result = await query();
     if (result.error) throw result.error;
+    if (result.data === null) throw new Error('No data returned');
     return result.data;
   };
 
