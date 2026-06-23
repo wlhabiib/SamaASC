@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import { Player, Coach, PlayerStat, MatchLineup, Match, POSITION_LABELS } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
+import { fetcher } from '@/utils/fetcher';
 import { Shirt, User, Target, Footprints, Trophy, Medal, ChevronDown, Users } from 'lucide-react';
 
 const FORMATIONS: Record<string, { slot: number; x: number; y: number; label: string }[]> = {
@@ -52,12 +54,38 @@ const FORMATIONS: Record<string, { slot: number; x: number; y: number; label: st
 export default function EquipePage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [coach, setCoach] = useState<Coach | null>(null);
-  const [stats, setStats] = useState<PlayerStat[]>([]);
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [lineups, setLineups] = useState<MatchLineup[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // SWR hooks for data fetching with caching
+  const { data: players = [] } = useSWR<Player[]>(
+    team ? `/api/data/players?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: coach } = useSWR<Coach>(
+    team ? `/api/data/coach?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: stats = [] } = useSWR<PlayerStat[]>(
+    team ? `/api/data/player-stats?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: matches = [] } = useSWR<Match[]>(
+    team ? `/api/data/matches?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: lineups = [] } = useSWR<MatchLineup[]>(
+    team ? `/api/data/match-lineup?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
   const [view, setView] = useState<'field' | 'list' | 'stats'>('field');
   const [statsComp, setStatsComp] = useState<string>('all');
   const [selectedMatchId, setSelectedMatchId] = useState<string>('');
@@ -77,63 +105,18 @@ export default function EquipePage() {
     }
   }, [team, user, contextLoading, router]);
 
+  // Auto-select next upcoming match when matches load
   useEffect(() => {
-    async function load() {
-      if (!team) return;
-      
-      const [p, c, s, m, l] = await Promise.all([
-        fetch(`/api/data/players?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/coach?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/player-stats?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/matches?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/match-lineup?team_id=${team.id}`).then(r => r.json()),
-      ]);
-      setPlayers(p);
-      if (c) setCoach(c);
-      setStats(s);
-      setMatches(m);
-      setLineups(l);
-      // Auto-select next upcoming match
-      const upcoming = m.find((m: Match) => m.status === 'upcoming');
+    if (matches.length > 0 && !selectedMatchId) {
+      const upcoming = matches.find(m => m.status === 'upcoming');
       if (upcoming) {
         setSelectedMatchId(upcoming.id);
         setSelectedFormation(upcoming.formation || '4-3-3');
       }
-      setLoading(false);
     }
-    load();
+  }, [matches, selectedMatchId]);
 
-    // Setup realtime subscriptions - DISABLED (Supabase removed)
-    // if (team && supabase) {
-    //   const channels: any[] = [];
-    //   const tables = ['players', 'coach', 'player_stats', 'matches', 'match_lineup'];
-
-    //   tables.forEach(table => {
-    //     const channel = supabase!
-    //       .channel(`${table}-changes`)
-    //       .on(
-    //         'postgres_changes',
-    //         {
-    //           event: '*',
-    //           schema: 'public',
-    //           table: table,
-    //           filter: `team_id=eq.${team.id}`,
-    //         },
-    //         () => {
-    //           load();
-    //         }
-    //       )
-    //       .subscribe();
-    //     channels.push(channel);
-    //   });
-
-    //   return () => {
-    //     channels.forEach(channel => supabase!.removeChannel(channel));
-    //   };
-    // }
-  }, [team]);
-
-  if (loading || contextLoading) {
+  if (contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">

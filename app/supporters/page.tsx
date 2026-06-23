@@ -2,16 +2,24 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import { Supporter } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
+import { fetcher } from '@/utils/fetcher';
 import { Heart, Send, Flame, MessageCircle, Mic, ImagePlus, X, Play, Smile, Paperclip } from 'lucide-react';
 
 export default function SupportersPage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-  const [supporters, setSupporters] = useState<Supporter[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // SWR hook for data fetching with caching
+  const { data: supporters = [], mutate } = useSWR<Supporter[]>(
+    team ? `/api/data/supporters?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
@@ -35,62 +43,6 @@ export default function SupportersPage() {
       }
     }
   }, [team, user, contextLoading, router]);
-
-  useEffect(() => {
-    async function load() {
-      if (!team) return;
-
-      console.log('Loading supporters from API...');
-      const response = await fetch(`/api/data/supporters?team_id=${team.id}`);
-      const data = await response.json();
-      console.log('Initial load supporters:', data);
-      setSupporters(data || []);
-      setLoading(false);
-    }
-    load();
-
-    // Setup realtime subscription - DISABLED (Supabase removed)
-    // if (team && supabase) {
-    //   const channel = supabase
-    //     .channel('supporters-changes')
-    //     .on(
-    //       'postgres_changes',
-    //       {
-    //         event: '*',
-    //         schema: 'public',
-    //         table: 'supporters',
-    //         filter: `team_id=eq.${team.id}`,
-    //       },
-    //       (payload) => {
-    //         console.log('Realtime event:', payload.eventType, payload);
-    //         console.log('Current supporters count before event:', supporters.length);
-    //         if (payload.eventType === 'INSERT') {
-    //           setSupporters(prev => {
-    //             // Avoid duplicates
-    //             if (prev.some(s => s.id === payload.new.id)) {
-    //               console.log('Duplicate detected, skipping');
-    //               return prev;
-    //             }
-    //             console.log('Adding new supporter to state');
-    //             return [payload.new as Supporter, ...prev];
-    //           });
-    //         } else if (payload.eventType === 'UPDATE') {
-    //           setSupporters(prev => prev.map(s => s.id === payload.new.id ? payload.new as Supporter : s));
-    //         } else if (payload.eventType === 'DELETE') {
-    //           console.log('Deleting supporter from state:', payload.old.id);
-    //           setSupporters(prev => prev.filter(s => s.id !== payload.old.id));
-    //         }
-    //       }
-    //     )
-    //     .subscribe();
-
-    //   console.log('Realtime subscription created');
-
-    //   return () => {
-    //     supabase!.removeChannel(channel);
-    //   };
-    // }
-  }, [team]);
 
   const startRecording = async () => {
     try {
@@ -175,21 +127,16 @@ export default function SupportersPage() {
       const data = await response.json();
       console.log('Success response:', data);
 
-      // Optimistic update - add new message immediately
-      setSupporters(prev => [data, ...prev]);
+      // Optimistic update with SWR mutate
+      mutate([...supporters, data], false);
 
       // Reset form
       setMessage('');
       setSelectedSticker(null);
       setRecordedAudio(null);
 
-      // Reload supporters in background for consistency
-      fetch(`/api/data/supporters?team_id=${team.id}`)
-        .then(r => r.json())
-        .then(supportersData => {
-          setSupporters(supportersData || []);
-        })
-        .catch(err => console.error('Error reloading supporters:', err));
+      // Revalidate to get fresh data from server
+      mutate();
     } catch (error) {
       console.error('Error submitting message:', error);
       alert('Erreur lors de l\'envoi du message');
@@ -198,7 +145,7 @@ export default function SupportersPage() {
     }
   };
 
-  if (loading || contextLoading) {
+  if (contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">
@@ -380,7 +327,7 @@ export default function SupportersPage() {
             </div>
           ))}
 
-          {supporters.length === 0 && !loading && (
+          {supporters.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
               <Heart size={40} className="mb-3 opacity-50" />
               <p className="text-sm">Soyez le premier à soutenir l&apos;équipe!</p>

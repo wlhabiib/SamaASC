@@ -2,17 +2,30 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import { Standing, Competition } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
+import { fetcher } from '@/utils/fetcher';
 import { Trophy } from 'lucide-react';
 
 export default function ClassementPage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-  const [standings, setStandings] = useState<Standing[]>([]);
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // SWR hooks for data fetching with caching
+  const { data: standings = [] } = useSWR<Standing[]>(
+    team ? `/api/data/standings?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: competitions = [] } = useSWR<Competition[]>(
+    team ? `/api/data/competitions?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
   const [selectedCompetition, setSelectedCompetition] = useState<string>('');
 
   useEffect(() => {
@@ -29,51 +42,14 @@ export default function ClassementPage() {
     }
   }, [team, user, contextLoading, router]);
 
+  // Auto-select first competition when standings load
   useEffect(() => {
-    async function load() {
-      if (!team) return;
-
-      const [s, c] = await Promise.all([
-        fetch(`/api/data/standings?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/competitions?team_id=${team.id}`).then(r => r.json()),
-      ]);
-      setStandings(s);
-      setCompetitions(c || []);
-      if (s && s.length > 0) {
-        setSelectedCompetition(s[0].competition_name);
-      }
-      setLoading(false);
+    if (standings.length > 0 && !selectedCompetition) {
+      setSelectedCompetition(standings[0].competition_name);
     }
-    load();
+  }, [standings, selectedCompetition]);
 
-    // Setup realtime subscription - DISABLED (Supabase removed)
-    // let channel: any;
-    // if (team && supabase) {
-    //   channel = supabase
-    //     .channel('standings-changes')
-    //     .on(
-    //       'postgres_changes',
-    //       {
-    //         event: '*',
-    //         schema: 'public',
-    //         table: 'standings',
-    //         filter: `team_id=eq.${team.id}`,
-    //       },
-    //       () => {
-    //         load();
-    //       }
-    //     )
-    //     .subscribe();
-    // }
-
-    return () => {
-      // if (channel && supabase) {
-      //   supabase.removeChannel(channel);
-      // }
-    };
-  }, [team]);
-
-  if (loading || contextLoading) {
+  if (contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">

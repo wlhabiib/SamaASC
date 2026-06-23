@@ -2,16 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import { GalleryItem } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
+import { fetcher } from '@/utils/fetcher';
 import { Image as ImageIcon, Play, X, ZoomIn, Download } from 'lucide-react';
 
 export default function GaleriePage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-  const [items, setItems] = useState<GalleryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // SWR hook for data fetching with caching
+  const { data: items = [] } = useSWR<GalleryItem[]>(
+    team ? `/api/data/gallery?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [filter, setFilter] = useState<string>('all');
 
@@ -29,41 +37,7 @@ export default function GaleriePage() {
     }
   }, [team, user, contextLoading, router]);
 
-  useEffect(() => {
-    async function load() {
-      if (!team) return;
-      
-      const data = await fetch(`/api/data/gallery?team_id=${team.id}`).then(r => r.json());
-      setItems(data);
-      setLoading(false);
-    }
-    load();
-
-    // Setup realtime subscription - DISABLED (Supabase removed)
-    // if (team && supabase) {
-    //   const channel = supabase
-    //     .channel('gallery-changes')
-    //     .on(
-    //       'postgres_changes',
-    //       {
-    //         event: '*',
-    //         schema: 'public',
-    //         table: 'gallery',
-    //         filter: `team_id=eq.${team.id}`,
-    //       },
-    //       () => {
-    //         load();
-    //       }
-    //     )
-    //     .subscribe();
-
-    //   return () => {
-    //     supabase!.removeChannel(channel);
-    //   };
-    // }
-  }, [team]);
-
-  if (loading || contextLoading) {
+  if (contextLoading) {
     return (
       <AppShell>
         <div className="grid grid-cols-2 gap-3 pt-4">

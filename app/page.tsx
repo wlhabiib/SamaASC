@@ -4,9 +4,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import { Announcement, Match, Player } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
+import { fetcher } from '@/utils/fetcher';
 import { Calendar, MapPin, Clock, Trophy, Users, Image, ChevronRight, Home } from 'lucide-react';
 
 const TYPE_CONFIG: Record<string, { icon: typeof Calendar; color: string; bg: string; label: string }> = {
@@ -35,13 +37,42 @@ function daysUntil(dateStr: string) {
 export default function AccueilPage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [upcomingMatches, setUpcomingMatches] = useState<Match[]>([]);
-  const [allMatches, setAllMatches] = useState<Match[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [galleryCount, setGalleryCount] = useState(0);
-  const [userCount, setUserCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+
+  // SWR hooks for data fetching with caching
+  const { data: announcements = [] } = useSWR<Announcement[]>(
+    team ? `/api/data/announcements?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: allMatches = [] } = useSWR<Match[]>(
+    team ? `/api/data/matches?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: players = [] } = useSWR<Player[]>(
+    team ? `/api/data/players?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: gallery = [] } = useSWR(
+    team ? `/api/data/gallery?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: users = [] } = useSWR(
+    team ? `/api/data/users?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  // Filter upcoming matches
+  const upcomingMatches = allMatches.filter(m => m.status === 'upcoming' || m.status === 'live');
+  const galleryCount = gallery.length;
+  const userCount = users.length;
 
   useEffect(() => {
     // Check authentication
@@ -73,63 +104,7 @@ export default function AccueilPage() {
     console.log('✅ Authentification OK, team:', team.name);
   }, [team, user, contextLoading, router]);
 
-  useEffect(() => {
-    async function load() {
-      console.log('📊 Début du chargement des données');
-      if (!team) {
-        console.log('⚠️ Pas de team, annulation du chargement');
-        return;
-      }
-      
-      try {
-        console.log('🔄 Chargement des données pour team_id:', team.id);
-        const [ann, m, p, g, u] = await Promise.all([
-          fetch(`/api/data/announcements?team_id=${team.id}`).then(r => r.json()).catch(e => { console.error('❌ Annonces:', e); return []; }),
-          fetch(`/api/data/matches?team_id=${team.id}`).then(r => r.json()).catch(e => { console.error('❌ Matchs:', e); return []; }),
-          fetch(`/api/data/players?team_id=${team.id}`).then(r => r.json()).catch(e => { console.error('❌ Joueurs:', e); return []; }),
-          fetch(`/api/data/gallery?team_id=${team.id}`).then(r => r.json()).catch(() => []),
-          fetch(`/api/data/users?team_id=${team.id}`).then(r => r.json()).catch(() => []),
-        ]);
-        console.log('✅ Données chargées:', { 
-          annonces: ann.length, 
-          matchs: m.length, 
-          joueurs: p.length, 
-          galerie: g.length, 
-          utilisateurs: u.length 
-        });
-        // Filter out expired announcements
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        const validAnnouncements = ann.filter((announcement: Announcement) => {
-          if (!announcement.event_date) return true; // Keep announcements without event_date
-          const eventDate = new Date(announcement.event_date + 'T00:00:00');
-          return eventDate.getTime() >= now.getTime();
-        });
-
-        setAnnouncements(validAnnouncements);
-        setAllMatches(m);
-        setPlayers(p);
-        setGalleryCount(g.length || 0);
-        setUserCount(u.length || 0);
-        const upcoming = m.filter((match: Match) => match.status === 'upcoming');
-        // Sort by date and show only the closest one
-        const sorted = upcoming.sort((a: Match, b: Match) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
-        setUpcomingMatches(sorted.slice(0, 1));
-        console.log('✅ Fin du chargement des données');
-      } catch (error) {
-        console.error('❌ Erreur lors du chargement:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    // Only load data if team is available
-    if (team && !contextLoading) {
-      load();
-    }
-  }, [team, contextLoading]);
-
-  if (loading || contextLoading) {
+  if (contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">
@@ -141,7 +116,10 @@ export default function AccueilPage() {
     );
   }
 
-  const nextMatch = upcomingMatches[0];
+  // Sort upcoming matches and get the closest one
+  const sortedUpcomingMatches = upcomingMatches
+    .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
+  const nextMatch = sortedUpcomingMatches[0];
   const completedMatches = allMatches.filter((m: Match) => m.status === 'completed').length;
 
   return (

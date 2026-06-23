@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import { Match, Player, MatchVote, Competition } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
+import { fetcher } from '@/utils/fetcher';
 import { Trophy, Calendar, MapPin, ThumbsUp, Check, ScrollText, X } from 'lucide-react';
 
 function formatDate(dateStr: string) {
@@ -15,11 +17,33 @@ function formatDate(dateStr: string) {
 export default function ResultatsPage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [votes, setVotes] = useState<MatchVote[]>([]);
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // SWR hooks for data fetching with caching
+  const { data: matches = [] } = useSWR<Match[]>(
+    team ? `/api/data/matches?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: players = [] } = useSWR<Player[]>(
+    team ? `/api/data/players?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: votes = [] } = useSWR<MatchVote[]>(
+    team ? `/api/data/match-votes?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  const { data: competitions = [] } = useSWR<Competition[]>(
+    team ? `/api/data/competitions?team_id=${team.id}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
+
+  // Local state for voting functionality
   const [voterName, setVoterName] = useState('');
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [votedFor, setVotedFor] = useState<string | null>(null);
@@ -27,6 +51,7 @@ export default function ResultatsPage() {
   const [showVoteModal, setShowVoteModal] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<string>('');
   const [voteError, setVoteError] = useState<string>('');
+  const [localVotes, setLocalVotes] = useState<MatchVote[]>([]);
 
   useEffect(() => {
     // Check authentication
@@ -42,85 +67,38 @@ export default function ResultatsPage() {
     }
   }, [team, user, contextLoading, router]);
 
-  useEffect(() => {
-    async function load() {
-      if (!team) return;
-      
-      const [m, p, v, c] = await Promise.all([
-        fetch(`/api/data/matches?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/players?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/match-votes?team_id=${team.id}`).then(r => r.json()).catch(() => []),
-        fetch(`/api/data/competitions?team_id=${team.id}`).then(r => r.json()).catch(() => []),
-      ]);
-      setMatches(m);
-      setPlayers(p);
-      setVotes(v);
-      setCompetitions(c || []);
-      setLoading(false);
-    }
-    load();
-
-    // Setup realtime subscriptions - DISABLED (Supabase removed)
-    // if (team && supabase) {
-    //   const channels: any[] = [];
-    //   const tables = ['matches', 'players', 'match_votes'];
-
-    //   tables.forEach(table => {
-    //     const channel = supabase!
-    //       .channel(`${table}-changes`)
-    //       .on(
-    //         'postgres_changes',
-    //         {
-    //           event: '*',
-    //           schema: 'public',
-    //           table: table,
-    //           filter: `team_id=eq.${team.id}`,
-    //         },
-    //         () => {
-    //           load();
-    //         }
-    //       )
-    //       .subscribe();
-    //     channels.push(channel);
-    //   });
-
-    //   return () => {
-    //     channels.forEach(channel => supabase!.removeChannel(channel));
-    //   };
-    // }
-  }, [team]);
-
   const handleVote = async (matchId: string, playerId: string) => {
     if (!voterName.trim() || !team) return;
-    
-    // Check if user has already voted for this match
-    const existingVote = votes.find(v => v.match_id === matchId && v.voter_name === voterName.trim());
+
+    // Check if user has already voted for this match (using combined votes)
+    const allVotes = [...votes, ...localVotes];
+    const existingVote = allVotes.find(v => v.match_id === matchId && v.voter_name === voterName.trim());
     if (existingVote) {
       setVoteError('Vous avez déjà voté pour ce match');
       return;
     }
-    
+
     setVoteError('');
     try {
       const response = await fetch('/api/match-votes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          match_id: matchId, 
-          player_id: playerId, 
-          voter_name: voterName.trim(), 
-          team_id: team.id 
+        body: JSON.stringify({
+          match_id: matchId,
+          player_id: playerId,
+          voter_name: voterName.trim(),
+          team_id: team.id
         }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         setVoteError(data.error || 'Erreur lors du vote');
         return;
       }
-      
-      setVotes(prev => [...prev, data]);
+
+      setLocalVotes(prev => [...prev, data]);
       setVotedFor(playerId);
     } catch (error) {
       setVoteError('Erreur lors du vote: ' + (error as Error).message);
@@ -128,11 +106,13 @@ export default function ResultatsPage() {
   };
 
   const getVotesForPlayer = (matchId: string, playerId: string) => {
-    return votes.filter(v => v.match_id === matchId && v.player_id === playerId).length;
+    const allVotes = [...votes, ...localVotes];
+    return allVotes.filter(v => v.match_id === matchId && v.player_id === playerId).length;
   };
 
   const getManOfMatch = (matchId: string) => {
-    const matchVotes = votes.filter(v => v.match_id === matchId);
+    const allVotes = [...votes, ...localVotes];
+    const matchVotes = allVotes.filter(v => v.match_id === matchId);
     if (matchVotes.length === 0) return null;
     const counts: Record<string, number> = {};
     matchVotes.forEach(v => {
@@ -143,7 +123,8 @@ export default function ResultatsPage() {
   };
 
   const getTopPlayers = (matchId: string) => {
-    const matchVotes = votes.filter(v => v.match_id === matchId);
+    const allVotes = [...votes, ...localVotes];
+    const matchVotes = allVotes.filter(v => v.match_id === matchId);
     if (matchVotes.length === 0) return [];
     const counts: Record<string, number> = {};
     matchVotes.forEach(v => {
@@ -161,7 +142,7 @@ export default function ResultatsPage() {
 
   const filteredMatches = matches.filter(m => m.status === 'completed' && (!selectedCompetition || m.competition === selectedCompetition));
 
-  if (loading || contextLoading) {
+  if (contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">
