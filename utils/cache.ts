@@ -1,6 +1,6 @@
 // Simple cache utility using localStorage
 const CACHE_PREFIX = 'samaasc_cache_';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes (reduced from 5 for faster updates)
 
 interface CacheEntry<T> {
   data: T;

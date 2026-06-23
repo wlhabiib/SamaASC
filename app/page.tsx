@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Announcement, Match, Player } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
@@ -318,13 +319,13 @@ export default function AccueilPage() {
               <div className="text-xs text-sky-700 mt-0.5">Joueurs</div>
             </div>
           </div>
-          <div 
-            className="rounded-xl p-4 text-center shadow-2xl border border-sky-300 cursor-pointer hover:shadow-sky-400/50 transition-all relative overflow-hidden"
+          <Link
+            href="/resultats"
+            className="rounded-xl p-4 text-center shadow-2xl border border-sky-300 cursor-pointer hover:shadow-sky-400/50 transition-all relative overflow-hidden block"
             style={{
               background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #020617 100%)',
               boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
             }}
-            onClick={() => router.push('/resultats')}
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-sky-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-sky-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
@@ -334,14 +335,14 @@ export default function AccueilPage() {
               <div className="text-2xl font-bold text-sky-900">{completedMatches}</div>
               <div className="text-xs text-sky-700 mt-0.5">Matchs</div>
             </div>
-          </div>
-          <div 
-            className="rounded-xl p-4 text-center shadow-2xl border border-sky-300 cursor-pointer hover:shadow-sky-400/50 transition-all relative overflow-hidden"
+          </Link>
+          <Link
+            href="/galerie"
+            className="rounded-xl p-4 text-center shadow-2xl border border-sky-300 cursor-pointer hover:shadow-sky-400/50 transition-all relative overflow-hidden block"
             style={{
               background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #020617 100%)',
               boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
             }}
-            onClick={() => router.push('/galerie')}
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-sky-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-sky-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
@@ -351,7 +352,7 @@ export default function AccueilPage() {
               <div className="text-2xl font-bold text-sky-900">{galleryCount}</div>
               <div className="text-xs text-sky-700 mt-0.5">Galerie</div>
             </div>
-          </div>
+          </Link>
           <div 
             className="rounded-xl p-4 text-center shadow-2xl border border-sky-300 relative overflow-hidden"
             style={{
