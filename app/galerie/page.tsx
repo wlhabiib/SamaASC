@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { GalleryItem } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { Image as ImageIcon, Play, X, ZoomIn } from 'lucide-react';
+import { Image as ImageIcon, Play, X, ZoomIn, Download } from 'lucide-react';
 
 export default function GaleriePage() {
   const router = useRouter();
@@ -183,6 +183,14 @@ export default function GaleriePage() {
           >
             <X size={20} />
           </button>
+          <a
+            href={selectedItem.url}
+            download
+            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            onClick={e => e.stopPropagation()}
+          >
+            <Download size={20} />
+          </a>
           <div className="max-w-sm w-full" onClick={e => e.stopPropagation()}>
             {selectedItem.type === 'video' ? (
               <video

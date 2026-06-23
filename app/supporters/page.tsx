@@ -20,8 +20,6 @@ export default function SupportersPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
   const [selectedCustomSticker, setSelectedCustomSticker] = useState<string | null>(null);
-  const [showStickerPanel, setShowStickerPanel] = useState(false);
-  const [showEmojiPanel, setShowEmojiPanel] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -313,84 +311,6 @@ export default function SupportersPage() {
               <span className="text-sm font-bold text-white">Votre message</span>
             </div>
 
-            {/* Emoji Panel */}
-            {showEmojiPanel && (
-              <div className="mb-3 p-3 bg-white/20 rounded-xl">
-                <div className="flex gap-2 flex-wrap">
-                  {STICKERS.map((sticker) => (
-                    <button
-                      key={sticker}
-                      type="button"
-                      onClick={() => {
-                        setSelectedSticker(selectedSticker === sticker ? null : sticker);
-                        setSelectedCustomSticker(null);
-                      }}
-                      className={`text-2xl p-2 rounded-lg transition-all ${
-                        selectedSticker === sticker
-                          ? 'ring-2 scale-110'
-                          : 'hover:bg-white/30'
-                      }`}
-                      style={{
-                        backgroundColor: selectedSticker === sticker ? 'rgba(255, 255, 255, 0.3)' : undefined,
-                      } as React.CSSProperties}
-                    >
-                      {sticker}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Sticker Panel */}
-            {showStickerPanel && (
-              <div className="mb-3 p-3 bg-white/20 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-white text-sm font-medium">Stickers personnalisés</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowStickerUpload(!showStickerUpload)}
-                    className="flex items-center gap-1 px-2 py-1 bg-white/30 rounded-lg text-white text-xs hover:bg-white/40"
-                  >
-                    <ImagePlus size={14} />
-                    Ajouter
-                  </button>
-                </div>
-                {showStickerUpload && (
-                  <div className="mb-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleStickerUpload}
-                      className="text-white text-xs"
-                    />
-                  </div>
-                )}
-                <div className="flex gap-2 flex-wrap">
-                  {customStickers.length > 0 ? (
-                    customStickers.map((sticker) => (
-                      <button
-                        key={sticker.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCustomSticker(selectedCustomSticker === sticker.url ? null : sticker.url);
-                          setSelectedSticker(null);
-                        }}
-                        className={`w-12 h-12 rounded-lg transition-all overflow-hidden ${
-                          selectedCustomSticker === sticker.url
-                            ? 'ring-2 scale-110'
-                            : 'hover:bg-white/30'
-                        }`}
-                      >
-                        <img src={sticker.url} alt={sticker.name} className="w-full h-full object-cover" />
-                      </button>
-                    ))
-                  ) : (
-                    <p className="text-white/70 text-xs">Aucun sticker personnalisé</p>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Voice Recording Preview */}
             {recordedAudio && (
               <div className="mb-3 p-3 bg-white/20 rounded-xl flex items-center gap-2">
@@ -405,49 +325,23 @@ export default function SupportersPage() {
               </div>
             )}
 
-            {/* WhatsApp-style Input Bar */}
+            {/* Simple Input Bar */}
             <form onSubmit={handleSubmit} className="flex items-end gap-2">
-              <div className="flex gap-1">
-                {/* Emoji Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEmojiPanel(!showEmojiPanel);
-                    setShowStickerPanel(false);
-                  }}
-                  className="p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors"
-                >
-                  <Smile size={20} />
-                </button>
-
-                {/* Sticker/Attachment Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowStickerPanel(!showStickerPanel);
-                    setShowEmojiPanel(false);
-                  }}
-                  className="p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors"
-                >
-                  <Paperclip size={20} />
-                </button>
-              </div>
-
               {/* Text Input */}
               <div className="flex-1">
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Écrivez votre message..."
+                  placeholder="Écrivez votre message... (emojis autorisés)"
                   className="w-full px-4 py-3 rounded-xl bg-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
                   rows={1}
-                  disabled={!!recordedAudio || !!selectedCustomSticker}
+                  disabled={!!recordedAudio}
                   style={{ minHeight: '48px' }}
                 />
               </div>
 
               {/* Voice/Send Button */}
-              {!message.trim() && !selectedSticker && !selectedCustomSticker && !recordedAudio ? (
+              {!message.trim() && !recordedAudio ? (
                 isRecording ? (
                   <button
                     type="button"

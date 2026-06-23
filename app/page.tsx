@@ -97,7 +97,16 @@ export default function AccueilPage() {
           galerie: g.length, 
           utilisateurs: u.length 
         });
-        setAnnouncements(ann);
+        // Filter out expired announcements
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const validAnnouncements = ann.filter((announcement: Announcement) => {
+          if (!announcement.event_date) return true; // Keep announcements without event_date
+          const eventDate = new Date(announcement.event_date + 'T00:00:00');
+          return eventDate.getTime() >= now.getTime();
+        });
+
+        setAnnouncements(validAnnouncements);
         setAllMatches(m);
         setPlayers(p);
         setGalleryCount(g.length || 0);

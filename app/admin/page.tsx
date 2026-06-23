@@ -1454,6 +1454,10 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
   const [description, setDescription] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#020617');
   const [secondaryColor, setSecondaryColor] = useState('#e0f2fe');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [teamPhotoFile, setTeamPhotoFile] = useState<File | null>(null);
+  const [teamPhotoPreview, setTeamPhotoPreview] = useState<string | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -1466,9 +1470,35 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
       setDescription(team.description || '');
       setPrimaryColor(team.primary_color || '#020617');
       setSecondaryColor(team.secondary_color || '#e0f2fe');
+      setLogoPreview(team.logo_url);
+      setTeamPhotoPreview(team.team_photo_url);
       setProfilePhotoPreview(user?.profile_photo_url || null);
     }
   }, [team, user]);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleTeamPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setTeamPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setTeamPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1484,13 +1514,36 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
 
   const handleSave = async () => {
     if (!team) return;
-    
+
     setSaving(true);
     setSuccess(false);
 
     try {
+      let logoUrl = team.logo_url;
+      let teamPhotoUrl = team.team_photo_url;
       let profilePhotoUrl = user?.profile_photo_url || null;
 
+      // Upload logo if changed
+      if (logoFile) {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(logoFile);
+        });
+        logoUrl = await base64Promise;
+      }
+
+      // Upload team photo if changed
+      if (teamPhotoFile) {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(teamPhotoFile);
+        });
+        teamPhotoUrl = await base64Promise;
+      }
+
+      // Upload profile photo if changed
       if (profilePhotoFile) {
         const reader = new FileReader();
         const base64Promise = new Promise<string>((resolve) => {
@@ -1500,6 +1553,7 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
         profilePhotoUrl = await base64Promise;
       }
 
+      // Update profile photo via API
       if (profilePhotoUrl !== user?.profile_photo_url && user) {
         await fetch('/api/admin/profile-photo', {
           method: 'POST',
@@ -1512,6 +1566,7 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
         });
       }
 
+      // Update team via API route
       const response = await fetch('/api/admin/team', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1524,8 +1579,8 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
           secondary_color: secondaryColor,
           accent_color: primaryColor,
           nav_color: primaryColor,
-          logo_url: team.logo_url,
-          team_photo_url: team.team_photo_url,
+          logo_url: logoUrl,
+          team_photo_url: teamPhotoUrl,
         }),
       });
 
@@ -1553,6 +1608,94 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
           <span className="text-green-700 font-medium">Paramètres sauvegardés avec succès</span>
         </div>
       )}
+
+      {/* Logo Upload */}
+      <div className="rounded-2xl shadow-lg p-5 relative overflow-hidden" style={{
+        background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 50%, ${secondaryColor} 100%)`,
+        borderColor: '#0ea5e9',
+        boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
+      }}>
+        <div className="absolute top-0 right-0 w-24 h-24 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+        <div className="relative z-10">
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Settings size={20} className="text-white" />
+            Logo de l'équipe
+          </h2>
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden border-2 border-dashed border-white/30">
+              {logoPreview ? (
+                <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <Upload size={32} className="text-white/70" />
+              )}
+            </div>
+            <div className="flex-1">
+              <input
+                type="file"
+                id="logo-upload"
+                accept="image/*"
+                onChange={handleLogoChange}
+                className="hidden"
+              />
+              <label
+                htmlFor="logo-upload"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-white/30 transition-colors cursor-pointer border border-white/30"
+              >
+                <Upload size={18} />
+                Choisir un logo
+              </label>
+              <p className="text-xs text-white/70 mt-2">
+                Formats acceptés: JPG, PNG, GIF (max 5MB)
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Team Photo Upload */}
+      <div className="rounded-2xl shadow-lg p-5 relative overflow-hidden" style={{
+        background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 50%, ${secondaryColor} 100%)`,
+        borderColor: '#0ea5e9',
+        boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
+      }}>
+        <div className="absolute top-0 right-0 w-24 h-24 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+        <div className="relative z-10">
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Settings size={20} className="text-white" />
+            Photo de l'équipe
+          </h2>
+          <div className="flex items-center gap-4">
+            <div className="w-32 h-48 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden border-2 border-dashed border-white/30">
+              {teamPhotoPreview ? (
+                <img src={teamPhotoPreview} alt="Photo de l'équipe" className="w-full h-full object-cover" />
+              ) : (
+                <Upload size={32} className="text-white/70" />
+              )}
+            </div>
+            <div className="flex-1">
+              <input
+                type="file"
+                id="team-photo-upload"
+                accept="image/*"
+                onChange={handleTeamPhotoChange}
+                className="hidden"
+              />
+              <label
+                htmlFor="team-photo-upload"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-white/30 transition-colors cursor-pointer border border-white/30"
+              >
+                <Upload size={18} />
+                Choisir une photo
+              </label>
+              <p className="text-xs text-white/70 mt-2">
+                Formats acceptés: JPG, PNG, GIF (max 5MB)
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Profile Photo Upload */}
       <div className="rounded-2xl shadow-lg p-5 relative overflow-hidden" style={{
