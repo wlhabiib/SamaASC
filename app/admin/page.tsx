@@ -122,32 +122,24 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    // Only check authentication after context is fully loaded
-    console.log('Admin page auth check:', { team, user, contextLoading, userRole });
     if (!contextLoading) {
       if (!team) {
-        console.log('No team, redirecting to login');
         router.push('/login');
         return;
       }
       if (!user) {
-        console.log('No user, redirecting to user-login');
         router.push('/user-login');
         return;
       }
-      // Check if user is admin (using userRole from auth context)
       if (userRole !== 'admin') {
-        console.log('User is not admin, redirecting to home');
         router.push('/');
         return;
       }
-      console.log('User is admin, allowing access');
     }
   }, [team, user, contextLoading, router, userRole]);
 
   const loadAll = useCallback(async () => {
     if (!team) return;
-    console.log('Starting to load all data for team:', team.id);
     setLoading(true);
     try {
       const [p, m, a, s, g, c, ps, l, comp, u] = await Promise.all([
@@ -162,9 +154,6 @@ export default function AdminPage() {
         fetch(`/api/data/competitions?team_id=${team.id}`).then(r => r.json()),
         fetch(`/api/data/users?team_id=${team.id}`).then(r => r.json()).catch(() => []),
       ]);
-      
-      console.log('Team members loaded:', u);
-      console.log('Data loaded successfully:', { players: p.length, matches: m.length, announcements: a.length });
       
       setPlayers(p);
       setMatches(m);
@@ -278,7 +267,6 @@ export default function AdminPage() {
 
     try {
       const isHomeBoolean = form.is_home !== 'false';
-      console.log('Match form is_home value:', form.is_home, '-> boolean:', isHomeBoolean);
 
       const payload = {
         opponent: form.opponent, match_date: form.match_date, match_time: form.match_time || null,
@@ -289,7 +277,6 @@ export default function AdminPage() {
         opponent_logo: form.opponent_logo || null,
         team_id: team.id,
       };
-      console.log('Submitting match payload:', payload);
       if (editing) {
         const response = await fetch('/api/admin/matches', {
           method: 'PUT',
@@ -400,7 +387,6 @@ export default function AdminPage() {
       }
 
       const payload = { type, url: form.url, caption: form.caption || null, event_type: form.event_type || 'other', team_id: team.id };
-      console.log('Submitting gallery item:', { type, urlLength: form.url.length, caption: form.caption, event_type: form.event_type, team_id: team.id });
 
       const response = await fetch('/api/admin/gallery', {
         method: editing ? 'PUT' : 'POST',
@@ -409,7 +395,6 @@ export default function AdminPage() {
       });
 
       const responseText = await response.text();
-      console.log('Gallery API response:', response.status, responseText);
 
       if (!response.ok) {
         let error;
@@ -1566,17 +1551,13 @@ function SettingsCard({ team, user, loadAll }: { team: any; user: any; loadAll: 
         team_photo_url: teamPhotoUrl,
       };
 
-      console.log('Sending team update payload:', payload);
-
       const response = await fetch('/api/admin/team', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      console.log('Team API response status:', response.status);
       const responseData = await response.json();
-      console.log('Team API response:', responseData);
 
       if (!response.ok) {
         throw new Error(responseData.error || 'Failed to update team');

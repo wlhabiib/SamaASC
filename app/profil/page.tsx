@@ -104,9 +104,7 @@ export default function ProfilPage() {
         }),
       });
 
-      console.log('Profile API response status:', response.status);
       const responseData = await response.json();
-      console.log('Profile API response:', responseData);
 
       if (!response.ok) {
         throw new Error(responseData.error || `HTTP ${response.status}: Failed to update profile`);

@@ -129,16 +129,12 @@ export default function SupportersPage() {
         }),
       });
 
-      console.log('Response status:', response.status);
-
       if (!response.ok) {
         const error = await response.json();
-        console.error('Error response:', error);
         throw new Error(error.error || 'Failed to submit message');
       }
 
       const data = await response.json();
-      console.log('Success response:', data);
 
       // Optimistic update
       setSupporters([data, ...supporters]);

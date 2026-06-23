@@ -50,7 +50,6 @@ export default function RegisterPage() {
       }
 
       // Call the complete team creation endpoint
-      console.log('📝 Calling create-complete-team API...');
       const teamResponse = await fetch('/api/auth/create-complete-team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,8 +64,7 @@ export default function RegisterPage() {
 
       if (!teamResponse.ok) {
         const errorText = await teamResponse.text();
-        console.error('❌ Team creation API error:', { status: teamResponse.status, body: errorText });
-        
+
         try {
           const errorJson = JSON.parse(errorText);
           throw new Error(errorJson.error || 'Erreur lors de la création de l\'équipe');
@@ -76,7 +74,6 @@ export default function RegisterPage() {
       }
 
       const result = await teamResponse.json();
-      console.log('✅ Team creation result:', result);
 
       if (result.error) {
         throw new Error(result.error);
@@ -87,17 +84,13 @@ export default function RegisterPage() {
       }
 
       // Store credentials for display
-      console.log('✅ Registration complete!');
-      console.log('Email:', adminEmail);
-      console.log('Password:', adminPassword);
       setCreatedEmail(adminEmail);
       setCreatedPassword(adminPassword);
 
       setSuccess(true);
-      
+
       // Redirect to login page after 3 seconds
       setTimeout(() => {
-        console.log('Redirecting to login...');
         router.push('/login');
       }, 3000);
     } catch (err) {

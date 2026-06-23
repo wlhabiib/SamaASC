@@ -62,7 +62,6 @@ export default function LoginPage() {
     const forceLogout = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        console.log('🔒 Session détectée sur page login, déconnexion forcée');
         await supabase.auth.signOut();
         // Nettoyer localStorage
         Object.keys(localStorage).forEach(key => {
@@ -104,61 +103,44 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🔐 handleLogin appelé - FORMULAIRE SOUMIS');
     setLoading(true);
     setError('');
 
     try {
-      console.log('🔐 Tentative de connexion avec email:', email);
-      
       // Sign in with Supabase Auth
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
 
-      console.log('📱 Réponse Supabase Auth:', { userId: data?.user?.id, hasError: !!authError });
-
       if (authError) {
-        console.error('❌ Erreur d\'authentification:', authError.message);
         setError('Identifiants incorrects ou compte non activé. Message: ' + authError.message);
         setLoading(false);
         return;
       }
 
       if (!data.user) {
-        console.error('❌ Aucun utilisateur retourné');
         setError('Erreur lors de la connexion');
         setLoading(false);
         return;
       }
 
-      console.log('✅ Connexion réussie pour utilisateur:', data.user.id);
-
       // Attendre que la session soit synchronisée dans les cookies
-      console.log('🔄 Synchronisation de la session Supabase...');
       await supabase.auth.refreshSession();
-      console.log('✅ Session refresh complétée');
 
       // Wait for session sync
-      console.log('⏳ Attente de synchronisation de la session...');
       await supabase.auth.refreshSession();
-      console.log('✅ Session refresh complétée');
-      
+
       // Get the session with the new tokens
       const { data: { session: freshSession } } = await supabase.auth.getSession();
-      
+
       if (!freshSession) {
-        console.error('❌ No session after refresh');
         setError('Erreur de synchronisation de session');
         setLoading(false);
         return;
       }
-      
-      console.log('✅ Session fraîche obtenue:', freshSession.user.id);
-      
+
       // Store session in localStorage for client-side Supabase to find
-      console.log('💾 Stockage de la session dans localStorage...');
       const sessionData = {
         access_token: freshSession.access_token,
         refresh_token: freshSession.refresh_token,
@@ -167,16 +149,14 @@ export default function LoginPage() {
         token_type: 'bearer',
         user: freshSession.user,
       };
-      
+
       // Store for Supabase Auth SDK
       localStorage.setItem(
         `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1].split('.')[0]}-auth-token`,
         JSON.stringify(sessionData)
       );
-      console.log('✅ Session stockée dans localStorage');
-      
+
       // Also sync session to server-side cookies
-      console.log('🔐 Synchronisation de la session avec les cookies HTTP...');
       try {
         const syncResponse = await fetch('/api/auth/sync', {
           method: 'POST',
@@ -188,16 +168,13 @@ export default function LoginPage() {
         });
 
         if (!syncResponse.ok) {
-          console.warn('⚠️ Sync failed:', await syncResponse.text());
-        } else {
-          console.log('✅ Session synchronisée aux cookies');
+          console.warn('Sync failed:', await syncResponse.text());
         }
       } catch (syncErr) {
-        console.error('❌ Sync error:', syncErr);
+        console.error('Sync error:', syncErr);
       }
 
       // Now redirect to home
-      console.log('✅ Redirection vers accueil...');
       window.location.href = '/';
     } catch (err) {
       console.error('Erreur lors de la connexion:', err);
@@ -205,15 +182,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-  
-  // Expose login function globally for testing
-  useEffect(() => {
-    (window as any).testLogin = () => {
-      console.log('🧪 TEST: Calling handleLogin directly with form data:', { email, password });
-      const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-      handleLogin(fakeEvent);
-    };
-  }, [email, password]);
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
