@@ -82,15 +82,23 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [teamUser, setTeamUser] = useState<TeamUser | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<number>(0);
 
-  const refreshTeam = async () => {
+  const refreshTeam = async (force = false) => {
+    const now = Date.now();
+    // Skip refresh if less than 30 seconds ago and not forced
+    if (!force && lastRefresh && now - lastRefresh < 30000) {
+      console.log('⏭️ Skipping refresh (cached data is fresh)');
+      return;
+    }
+
     try {
       setLoading(true);
       console.log('🔄 Début de refreshTeam');
-      
+
       const { data: { session } } = await supabase.auth.getSession();
       console.log('📱 Session:', { hasSession: !!session, userId: session?.user?.id, email: session?.user?.email });
-      
+
       if (!session?.user) {
         console.log('⚠️ Aucune session utilisateur');
         setTeam(null);
@@ -128,7 +136,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         if (teamMemberByEmail) {
           console.log('✅ Team member found by email, updating user_id...');
           teamMember = teamMemberByEmail;
-          
+
           // Update the user_id to the correct Supabase Auth ID
           const { error: updateError } = await supabase
             .from('team_members')
@@ -168,6 +176,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           setTeam(teamData as Team);
         }
       }
+
+      setLastRefresh(now);
     } catch (error) {
       console.error('❌ Error refreshing team info:', error);
       setTeam(null);
@@ -179,12 +189,12 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    refreshTeam();
+    refreshTeam(true);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setCurrentUser(session.user);
-        refreshTeam();
+        refreshTeam(true);
       } else {
         setCurrentUser(null);
         setTeam(null);

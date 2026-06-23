@@ -275,17 +275,21 @@ export default function AdminPage() {
 
   const handleMatchSubmit = async () => {
     if (!team) return;
-    
+
     try {
+      const isHomeBoolean = form.is_home !== 'false';
+      console.log('Match form is_home value:', form.is_home, '-> boolean:', isHomeBoolean);
+
       const payload = {
         opponent: form.opponent, match_date: form.match_date, match_time: form.match_time || null,
-        venue: form.venue || null, competition: form.competition || null, is_home: form.is_home !== 'false',
+        venue: form.venue || null, competition: form.competition || null, is_home: isHomeBoolean,
         status: form.status || 'upcoming', score_home: form.score_home !== '' ? parseInt(form.score_home) : null,
         score_away: form.score_away !== '' ? parseInt(form.score_away) : null,
         scorers: form.scorers || null,
         opponent_logo: form.opponent_logo || null,
         team_id: team.id,
       };
+      console.log('Submitting match payload:', payload);
       if (editing) {
         const response = await fetch('/api/admin/matches', {
           method: 'PUT',

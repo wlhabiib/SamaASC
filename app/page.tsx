@@ -207,6 +207,12 @@ export default function AccueilPage() {
                 </div>
                 <span className="text-[#22D3EE] text-xs">{daysUntil(nextMatch.match_date)}</span>
               </div>
+              {(() => {
+                console.log('Next match data:', nextMatch);
+                console.log('is_home:', nextMatch.is_home);
+                console.log('opponent_logo:', nextMatch.opponent_logo);
+                return null;
+              })()}
               <div className="flex items-center justify-between mb-4">
                 <div className="text-center">
                   <div className="w-14 h-14 rounded-xl bg-[#22D3EE]/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-inner overflow-hidden border border-[#22D3EE]/30">

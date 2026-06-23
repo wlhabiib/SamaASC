@@ -109,64 +109,86 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <Check size={40} className="text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Équipe créée avec succès ! ✅</h2>
-          <p className="text-gray-600 mb-6">Votre compte admin a été créé</p>
-          
-          {/* Credentials Display */}
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 text-left">
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">Identifiants Admin</p>
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Email:</p>
-                <p className="font-mono bg-white border border-gray-300 rounded p-2 text-sm text-gray-900 break-all">{createdEmail}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Mot de passe:</p>
-                <p className="font-mono bg-white border border-gray-300 rounded p-2 text-sm text-gray-900 break-all">{createdPassword}</p>
-              </div>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#020617] via-[#071A3D] to-[#2D0A5B]" />
+        <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/30 to-transparent opacity-40 blur-sm" />
+        <div className="absolute top-1/4 left-0 w-96 h-96 bg-[#22D3EE]/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 right-0 w-96 h-96 bg-[#8B5CF6]/20 rounded-full blur-3xl" />
+        <div className="relative z-10 w-full max-w-md mx-auto">
+          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-[#22D3EE] via-[#3B82F6] to-[#8B5CF6]/20 rounded-full mx-auto mb-4 flex items-center justify-center backdrop-blur-sm border border-white/20">
+              <Check size={40} className="text-[#22D3EE]" />
             </div>
-            <p className="text-xs text-amber-600 mt-3 bg-amber-50 p-2 rounded">
-              ⚠️ Sauvegardez ces identifiants! Vous en aurez besoin pour vous connecter.
-            </p>
+            <h2 className="text-2xl font-bold text-white mb-2">Équipe créée avec succès ! ✅</h2>
+            <p className="text-white/70 mb-6">Votre compte admin a été créé</p>
+
+            <div className="bg-white/10 border border-white/20 rounded-xl p-4 mb-6 text-left">
+              <p className="text-xs text-white/50 uppercase tracking-wide font-semibold mb-3">Identifiants Admin</p>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-white/60 mb-1">Email:</p>
+                  <p className="font-mono bg-black/30 border border-white/20 rounded p-2 text-sm text-white break-all">{createdEmail}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/60 mb-1">Mot de passe:</p>
+                  <p className="font-mono bg-black/30 border border-white/20 rounded p-2 text-sm text-white break-all">{createdPassword}</p>
+                </div>
+              </div>
+              <p className="text-xs text-amber-400 mt-3 bg-amber-500/10 p-2 rounded border border-amber-500/30">
+                ⚠️ Sauvegardez ces identifiants! Vous en aurez besoin pour vous connecter.
+              </p>
+            </div>
+
+            <p className="text-white/50 text-sm mt-2">Redirection vers la connexion...</p>
           </div>
-          
-          <p className="text-gray-500 text-sm mt-2">Redirection vers la connexion...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo/Brand */}
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#020617] via-[#071A3D] to-[#2D0A5B]" />
+      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/30 to-transparent opacity-40 blur-sm" />
+      <div className="absolute top-1/4 left-0 w-96 h-96 bg-[#22D3EE]/20 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 right-0 w-96 h-96 bg-[#8B5CF6]/20 rounded-full blur-3xl" />
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-[#22D3EE] rounded-full animate-pulse" />
+        <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-[#3B82F6] rounded-full animate-pulse delay-100" />
+        <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-[#8B5CF6] rounded-full animate-pulse delay-200" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md mx-auto">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <span className="text-4xl">⚽</span>
+          <div className="w-24 h-24 mx-auto mb-4 relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#22D3EE] via-[#3B82F6] to-[#8B5CF6] rounded-2xl blur-lg opacity-50" />
+            <div className="relative w-full h-full bg-gradient-to-br from-[#22D3EE]/20 via-[#3B82F6]/20 to-[#8B5CF6]/20 backdrop-blur-xl rounded-2xl border border-white/20 flex items-center justify-center shadow-2xl">
+              <span className="text-5xl">⚽</span>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Sama ASC</h1>
-          <p className="text-green-200">Créez votre équipe</p>
+          <h1 className="text-2xl font-bold text-white tracking-wider">SAMA ASC</h1>
         </div>
 
-        {/* Register Form */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
+        <div className="text-center mb-8">
+          <p className="text-sm text-white/70 mb-2">Créer votre</p>
+          <h2 className="text-5xl font-black bg-gradient-to-r from-[#22D3EE] via-[#3B82F6] to-[#8B5CF6] bg-clip-text text-transparent">
+            Équipe
+          </h2>
+        </div>
+
+        <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Nom de l'équipe
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#22D3EE]" size={20} />
                 <input
                   type="text"
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
                   placeholder="Ex: ASC Diambars"
                   required
                 />
@@ -174,36 +196,36 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Domaine
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#22D3EE]" size={20} />
                 <input
                   type="text"
                   value={domain}
                   onChange={handleDomainChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
                   placeholder="Ex: asc-diambars.com"
                   required
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-white/50 mt-1">
                 Utilisé pour valider les emails de l'équipe
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Email admin
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#22D3EE]" size={20} />
                 <input
                   type="email"
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
                   placeholder="Ex: admin@asc-diambars.com"
                   required
                 />
@@ -211,16 +233,16 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Mot de passe admin
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#22D3EE]" size={20} />
                 <input
                   type="password"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
                   placeholder="••••••••"
                   required
                   minLength={6}
@@ -229,7 +251,7 @@ export default function RegisterPage() {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+              <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm backdrop-blur-sm">
                 {error}
               </div>
             )}
@@ -237,28 +259,31 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-[#22D3EE] via-[#3B82F6] to-[#8B5CF6] text-white rounded-2xl font-bold hover:shadow-lg hover:shadow-[#22D3EE]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
             >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Création...
-                </>
-              ) : (
-                <>
-                  Créer mon équipe
-                  <ArrowRight size={18} />
-                </>
-              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#22D3EE] via-[#3B82F6] to-[#8B5CF6] opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="relative z-10">
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Création...
+                  </>
+                ) : (
+                  <>
+                    Créer mon équipe
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </span>
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-white/50">
               Déjà une équipe ?{' '}
               <button
                 onClick={() => router.push('/login')}
-                className="text-green-600 font-medium hover:underline"
+                className="text-[#22D3EE] font-medium hover:underline"
               >
                 Se connecter
               </button>
