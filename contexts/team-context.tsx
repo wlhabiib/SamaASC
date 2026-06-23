@@ -196,6 +196,9 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      // Appeler l'API de déconnexion pour nettoyer les cookies serveur
+      await fetch('/api/auth/logout', { method: 'POST' });
+      
       await supabase.auth.signOut();
       setTeam(null);
       setTeamUser(null);
