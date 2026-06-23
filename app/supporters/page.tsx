@@ -46,11 +46,6 @@ export default function SupportersPage() {
       console.log('Initial load supporters:', data);
       setSupporters(data || []);
       setLoading(false);
-
-      // Load custom stickers
-      const stickersResponse = await fetch(`/api/admin/custom-stickers?team_id=${team.id}`);
-      const stickersData = await stickersResponse.json();
-      setCustomStickers(stickersData || []);
     }
     load();
 
