@@ -37,7 +37,7 @@ interface TeamContextType {
   setTeam: (team: Team | null) => void;
   setUser: (user: TeamUser | null) => void;
   logout: () => void;
-  refreshTeam: () => Promise<void>;
+  refreshTeam: (force?: boolean) => Promise<void>;
 }
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
