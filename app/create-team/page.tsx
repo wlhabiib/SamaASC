@@ -52,6 +52,38 @@ export default function CreateTeamPage() {
         throw new Error('Erreur lors de la création de l\'équipe');
       }
 
+      // Créer l'utilisateur admin avec le rôle admin
+      const adminEmail = `admin@${slug}.com`;
+      const adminPassword = 'admin123'; // Mot de passe par défaut
+
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: adminEmail,
+        password: adminPassword,
+      });
+
+      if (authError) {
+        throw new Error('Erreur lors de la création du compte admin: ' + authError.message);
+      }
+
+      // Ajouter l'utilisateur à team_members avec le rôle admin
+      if (authData.user) {
+        const { error: memberError } = await supabase
+          .from('team_members')
+          .insert({
+            team_id: team.id,
+            user_id: authData.user.id,
+            email: adminEmail,
+            first_name: 'Admin',
+            last_name: teamName,
+            role: 'admin',
+            is_active: true,
+          });
+
+        if (memberError) {
+          throw new Error('Erreur lors de l\'ajout du membre admin: ' + memberError.message);
+        }
+      }
+
       setSuccess(true);
 
       // Rediriger vers la page d'accueil après 2 secondes

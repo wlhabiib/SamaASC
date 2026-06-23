@@ -122,7 +122,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     // Only check authentication after context is fully loaded
-    console.log('Admin page auth check:', { team, user, contextLoading });
+    console.log('Admin page auth check:', { team, user, contextLoading, userRole });
     if (!contextLoading) {
       if (!team) {
         console.log('No team, redirecting to login');
@@ -134,15 +134,15 @@ export default function AdminPage() {
         router.push('/user-login');
         return;
       }
-      // Check if user is admin
-      if (user.role !== 'admin') {
+      // Check if user is admin (using userRole from auth context)
+      if (userRole !== 'admin') {
         console.log('User is not admin, redirecting to home');
         router.push('/');
         return;
       }
       console.log('User is admin, allowing access');
     }
-  }, [team, user, contextLoading, router]);
+  }, [team, user, contextLoading, router, userRole]);
 
   const loadAll = useCallback(async () => {
     if (!team) return;

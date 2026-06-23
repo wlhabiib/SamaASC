@@ -35,9 +35,9 @@ export default function ParametresPage() {
     }
   }, [team, contextLoading, router]);
 
-  // Check if user is admin or owner
+  // Check if user is admin
   useEffect(() => {
-    if (!userLoading && userRole !== 'owner' && userRole !== 'admin') {
+    if (!userLoading && userRole !== 'admin') {
       router.push('/');
     }
   }, [userRole, userLoading, router]);
