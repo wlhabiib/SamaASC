@@ -160,7 +160,7 @@ export default function CreateTeamPage() {
                   type="text"
                   value={teamName}
                   onChange={(e) => handleTeamNameChange(e.target.value)}
-                  placeholder="Ex: ASC Teenbi"
+                  placeholder=""
                   className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
                   required
                 />
@@ -177,7 +177,7 @@ export default function CreateTeamPage() {
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
-                  placeholder="teenbi"
+                  placeholder=""
                   className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
                   required
                 />

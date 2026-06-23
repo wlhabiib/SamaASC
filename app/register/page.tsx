@@ -189,7 +189,7 @@ export default function RegisterPage() {
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
-                  placeholder="Ex: ASC Diambars"
+                  placeholder=""
                   required
                 />
               </div>
@@ -206,7 +206,7 @@ export default function RegisterPage() {
                   value={domain}
                   onChange={handleDomainChange}
                   className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
-                  placeholder="Ex: asc-diambars.com"
+                  placeholder=""
                   required
                 />
               </div>
@@ -226,7 +226,7 @@ export default function RegisterPage() {
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
-                  placeholder="Ex: admin@asc-diambars.com"
+                  placeholder=""
                   required
                 />
               </div>
@@ -243,7 +243,7 @@ export default function RegisterPage() {
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#020617]/50 border border-[#22D3EE]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22D3EE]/50 focus:border-[#22D3EE] backdrop-blur-sm transition-all"
-                  placeholder="••••••••"
+                  placeholder=""
                   required
                   minLength={6}
                 />
