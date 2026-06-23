@@ -58,6 +58,24 @@ export default function LoginPage() {
 
     checkInstalled();
 
+    // Force logout if user arrives on login page with existing session
+    const forceLogout = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('🔒 Session détectée sur page login, déconnexion forcée');
+        await supabase.auth.signOut();
+        // Nettoyer localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') && key.includes('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        });
+        localStorage.removeItem('supabase.auth.token');
+      }
+    };
+
+    forceLogout();
+
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
