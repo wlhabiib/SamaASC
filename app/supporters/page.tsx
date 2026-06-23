@@ -15,11 +15,8 @@ export default function SupportersPage() {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
-  const [customStickers, setCustomStickers] = useState<any[]>([]);
-  const [showStickerUpload, setShowStickerUpload] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
-  const [selectedCustomSticker, setSelectedCustomSticker] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -134,40 +131,10 @@ export default function SupportersPage() {
     }
   };
 
-  const handleStickerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && team && user) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        try {
-          const response = await fetch('/api/admin/custom-stickers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              team_id: team.id,
-              name: file.name,
-              url: base64,
-              uploaded_by: user.user_id
-            }),
-          });
-          if (response.ok) {
-            const newSticker = await response.json();
-            setCustomStickers(prev => [newSticker, ...prev]);
-            setShowStickerUpload(false);
-          }
-        } catch (error) {
-          console.error('Error uploading sticker:', error);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !team) return;
-    if (!selectedSticker && !selectedCustomSticker && !message.trim() && !recordedAudio) return;
+    if (!selectedSticker && !message.trim() && !recordedAudio) return;
     setSubmitting(true);
 
     let voiceUrl = null;
@@ -187,23 +154,18 @@ export default function SupportersPage() {
       voiceUrl = await base64Promise;
     }
 
-    // Handle custom sticker
-    if (selectedCustomSticker) {
-      message_type = 'sticker';
-    }
-
     try {
       const response = await fetch('/api/admin/supporters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
-          message: selectedCustomSticker ? null : (selectedSticker ? selectedSticker + ' ' : '') + message.trim(),
+          message: (selectedSticker ? selectedSticker + ' ' : '') + message.trim(),
           team_id: team.id,
           profile_photo_url: (user as any).profile_photo_url || null,
           message_type,
           voice_url: voiceUrl,
-          sticker_url: selectedCustomSticker
+          sticker_url: null
         }),
       });
 
@@ -217,16 +179,22 @@ export default function SupportersPage() {
 
       const data = await response.json();
       console.log('Success response:', data);
-      // Reload data from database as fallback using API endpoint
-      console.log('Reloading supporters from database via API...');
-      const supportersResponse = await fetch(`/api/data/supporters?team_id=${team.id}`);
-      const supportersData = await supportersResponse.json();
-      console.log('Reloaded supporters:', supportersData);
-      setSupporters(supportersData || []);
+
+      // Optimistic update - add new message immediately
+      setSupporters(prev => [data, ...prev]);
+
+      // Reset form
       setMessage('');
       setSelectedSticker(null);
-      setSelectedCustomSticker(null);
       setRecordedAudio(null);
+
+      // Reload supporters in background for consistency
+      fetch(`/api/data/supporters?team_id=${team.id}`)
+        .then(r => r.json())
+        .then(supportersData => {
+          setSupporters(supportersData || []);
+        })
+        .catch(err => console.error('Error reloading supporters:', err));
     } catch (error) {
       console.error('Error submitting message:', error);
       alert('Erreur lors de l\'envoi du message');

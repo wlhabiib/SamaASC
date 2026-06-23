@@ -14,7 +14,6 @@ const NAV_ITEMS = [
   { icon: Heart, label: 'Supporters', path: '/supporters' },
   { icon: Settings, label: 'Mon Profil', path: '/profil' },
   { icon: Settings, label: 'Admin', path: '/admin', adminOnly: true },
-  { icon: Settings, label: 'Paramètres', path: '/parametres', adminOnly: true },
 ];
 
 export default function BottomNav() {

@@ -7,9 +7,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function PUT(request: NextRequest) {
   try {
-    const { id, team_id, first_name, last_name, profile_photo_url } = await request.json();
+    const { user_id, team_id, first_name, last_name, profile_photo_url } = await request.json();
 
-    if (!id || !team_id) {
+    if (!user_id || !team_id) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -17,13 +17,13 @@ export async function PUT(request: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from('users')
+      .from('team_members')
       .update({
         first_name,
         last_name,
         profile_photo_url,
       })
-      .eq('id', id)
+      .eq('user_id', user_id)
       .eq('team_id', team_id)
       .select();
 
