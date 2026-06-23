@@ -60,16 +60,20 @@ export default function LoginPage() {
 
     // Force logout if user arrives on login page with existing session
     const forceLogout = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await supabase.auth.signOut();
-        // Nettoyer localStorage
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-') && key.includes('-auth-token')) {
-            localStorage.removeItem(key);
-          }
-        });
-        localStorage.removeItem('supabase.auth.token');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await supabase.auth.signOut();
+          // Nettoyer localStorage
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('sb-') && key.includes('-auth-token')) {
+              localStorage.removeItem(key);
+            }
+          });
+          localStorage.removeItem('supabase.auth.token');
+        }
+      } catch (error) {
+        // Ignore errors during force logout
       }
     };
 
