@@ -91,8 +91,11 @@ export interface MatchVote {
 export interface Supporter {
   id: string;
   name: string;
-  message: string;
+  message: string | null;
   profile_photo_url: string | null;
+  message_type: 'text' | 'voice' | 'sticker';
+  voice_url: string | null;
+  sticker_url: string | null;
   created_at: string;
 }
 
