@@ -65,23 +65,26 @@ export function clearCache(key?: string): void {
 
 export async function fetchWithCache<T>(
   url: string,
-  cacheKey: string
+  cacheKey: string,
+  forceRefresh = false
 ): Promise<T> {
-  // Try to get from cache first
-  const cached = getCachedData<T>(cacheKey);
-  if (cached) {
-    return cached;
+  // Try to get from cache first (unless force refresh)
+  if (!forceRefresh) {
+    const cached = getCachedData<T>(cacheKey);
+    if (cached) {
+      return cached;
+    }
   }
-  
+
   // Fetch from API
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   const data = await response.json();
-  
+
   // Cache the result
   setCachedData(cacheKey, data);
-  
+
   return data;
 }

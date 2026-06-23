@@ -109,13 +109,35 @@ export default function AccueilPage() {
     }
   }, [team, contextLoading]);
 
-  // Reload gallery count when page becomes visible (after admin adds items)
+  // Reload all data when page becomes visible (after admin adds items)
   useEffect(() => {
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible' && team) {
-        fetchWithCache<any[]>(`/api/data/gallery?team_id=${team.id}`, `gallery_${team.id}`)
-          .then(g => setGalleryCount((g as any[]).length || 0))
-          .catch(console.error);
+        try {
+          const [ann, m, p, g, u] = await Promise.all([
+            fetchWithCache<Announcement[]>(`/api/data/announcements?team_id=${team.id}`, `announcements_${team.id}`, true),
+            fetchWithCache<Match[]>(`/api/data/matches?team_id=${team.id}`, `matches_${team.id}`, true),
+            fetchWithCache<Player[]>(`/api/data/players?team_id=${team.id}`, `players_${team.id}`, true),
+            fetchWithCache<any[]>(`/api/data/gallery?team_id=${team.id}`, `gallery_${team.id}`, true),
+            fetchWithCache<any[]>(`/api/data/users?team_id=${team.id}`, `users_${team.id}`, true),
+          ]);
+
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          const validAnnouncements = ann.filter((announcement: Announcement) => {
+            if (!announcement.event_date) return true;
+            const eventDate = new Date(announcement.event_date + 'T00:00:00');
+            return eventDate.getTime() >= now.getTime();
+          });
+
+          setAnnouncements(validAnnouncements);
+          setAllMatches(m);
+          setPlayers(p);
+          setGalleryCount((g as any[]).length || 0);
+          setUserCount((u as any[]).length || 0);
+        } catch (error) {
+          console.error('Error reloading data:', error);
+        }
       }
     };
 
