@@ -150,30 +150,13 @@ export default function ResultatsPage() {
 
   const filteredMatches = matches.filter(m => m.status === 'completed' && (!selectedCompetition || m.competition === selectedCompetition));
 
-  // Store vote end times for each match (3 hours from when match was completed)
-  const [voteEndTimes, setVoteEndTimes] = useState<Record<string, Date>>({});
-
-  // Initialize vote end times when matches load
-  useEffect(() => {
-    const newEndTimes: Record<string, Date> = {};
-    filteredMatches.forEach(match => {
-      if (!voteEndTimes[match.id]) {
-        // Set end time to 3 hours from now for newly completed matches
-        newEndTimes[match.id] = new Date(Date.now() + 3 * 60 * 60 * 1000);
-      }
-    });
-    if (Object.keys(newEndTimes).length > 0) {
-      setVoteEndTimes(prev => ({ ...prev, ...newEndTimes }));
-    }
-  }, [filteredMatches]);
-
-  // Update countdown timers
+  // Update countdown timers using vote_end_time from database
   useEffect(() => {
     const interval = setInterval(() => {
       const newTimes: Record<string, number> = {};
       filteredMatches.forEach(match => {
-        const endTime = voteEndTimes[match.id];
-        if (endTime) {
+        if (match.vote_end_time) {
+          const endTime = new Date(match.vote_end_time);
           const now = new Date();
           const remaining = Math.max(0, endTime.getTime() - now.getTime());
           newTimes[match.id] = remaining;
@@ -183,7 +166,7 @@ export default function ResultatsPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [filteredMatches, voteEndTimes]);
+  }, [filteredMatches]);
 
   // Format countdown
   const formatCountdown = (ms: number) => {
@@ -198,9 +181,9 @@ export default function ResultatsPage() {
 
   // Check if voting is still open
   const isVotingOpen = (matchId: string) => {
-    const endTime = voteEndTimes[matchId];
-    if (!endTime) return false;
-    return new Date() < endTime;
+    const match = filteredMatches.find(m => m.id === matchId);
+    if (!match || !match.vote_end_time) return false;
+    return new Date() < new Date(match.vote_end_time);
   };
 
   if (contextLoading) {
@@ -329,9 +312,9 @@ export default function ResultatsPage() {
                       </span>
                     </div>
                     {votingOpen && (
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
-                        <Clock size={12} className="text-white" />
-                        <span className="text-xs font-bold text-white">{formatCountdown(remaining)}</span>
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/20 backdrop-blur-sm border border-red-400/30">
+                        <Clock size={12} className="text-red-400" />
+                        <span className="text-xs font-bold text-red-400">{formatCountdown(remaining)}</span>
                       </div>
                     )}
                   </div>

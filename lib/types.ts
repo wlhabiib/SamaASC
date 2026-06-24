@@ -40,6 +40,7 @@ export interface Match {
   formation: string;
   scorers: string | null;
   opponent_logo: string | null;
+  vote_end_time: string | null;
 }
 
 export interface MatchLineup {

@@ -58,6 +58,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Set vote_end_time when match is marked as completed (3 hours from now)
+    let voteEndTime = null;
+    if (status === 'completed') {
+      voteEndTime = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
+    }
+
     const { data, error } = await supabase
       .from('matches')
       .update({ 
@@ -72,7 +78,8 @@ export async function PUT(request: NextRequest) {
         score_away: score_away !== '' ? parseInt(score_away) : null,
         formation: '4-3-3',
         scorers: scorers || null,
-        opponent_logo: opponent_logo || null
+        opponent_logo: opponent_logo || null,
+        vote_end_time: voteEndTime
       })
       .eq('id', id)
       .eq('team_id', team_id)
