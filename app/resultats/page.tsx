@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Match, Player, MatchVote, Competition } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
 import { fetchWithCache } from '@/utils/cache';
-import { Trophy, Calendar, MapPin, ThumbsUp, Check, ScrollText, X, Clock, Heart } from 'lucide-react';
+import { Trophy, Calendar, MapPin, ThumbsUp, Check, ScrollText, X, Clock, Medal, Star, Award } from 'lucide-react';
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -148,7 +148,10 @@ export default function ResultatsPage() {
       .filter(item => item.player);
   };
 
-  const filteredMatches = matches.filter(m => m.status === 'completed' && (!selectedCompetition || m.competition === selectedCompetition));
+  const filteredMatches = useMemo(() => 
+    matches.filter(m => m.status === 'completed' && (!selectedCompetition || m.competition === selectedCompetition)),
+    [matches, selectedCompetition]
+  );
 
   // Update countdown timers using vote_end_time from database
   useEffect(() => {
@@ -311,7 +314,7 @@ export default function ResultatsPage() {
                         Terminé
                       </span>
                     </div>
-                    {votingOpen && (
+                    {votingOpen && remaining > 0 && (
                       <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/20 backdrop-blur-sm border border-red-400/30">
                         <Clock size={12} className="text-red-400" />
                         <span className="text-xs font-bold text-red-400">{formatCountdown(remaining)}</span>
@@ -394,14 +397,14 @@ export default function ResultatsPage() {
                       </div>
                     )}
                     <div className="absolute top-4 right-4 flex gap-2">
-                      <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg animate-bounce">
-                        <Heart size={20} className="text-red-500 fill-red-500" />
+                      <div className="w-10 h-10 rounded-full bg-yellow-400/90 backdrop-blur-sm flex items-center justify-center shadow-lg animate-bounce">
+                        <Trophy size={20} className="text-yellow-900" />
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg animate-bounce" style={{ animationDelay: '0.2s' }}>
-                        <Heart size={20} className="text-pink-500 fill-pink-500" />
+                      <div className="w-10 h-10 rounded-full bg-amber-400/90 backdrop-blur-sm flex items-center justify-center shadow-lg animate-bounce" style={{ animationDelay: '0.2s' }}>
+                        <Medal size={20} className="text-amber-900" />
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg animate-bounce" style={{ animationDelay: '0.4s' }}>
-                        <Heart size={20} className="text-rose-500 fill-rose-500" />
+                      <div className="w-10 h-10 rounded-full bg-orange-400/90 backdrop-blur-sm flex items-center justify-center shadow-lg animate-bounce" style={{ animationDelay: '0.4s' }}>
+                        <Star size={20} className="text-orange-900 fill-orange-900" />
                       </div>
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
