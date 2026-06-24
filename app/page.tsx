@@ -225,21 +225,13 @@ export default function AccueilPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="text-center">
                   <div className="w-14 h-14 rounded-xl bg-sky-600/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-inner overflow-hidden border border-sky-400/30">
-                    {nextMatch.is_home ? (
-                      team?.logo_url ? (
-                        <img src={team.logo_url} alt="Logo" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-bold text-lg text-sky-600">{team?.name?.substring(0, 2).toUpperCase() || 'SA'}</span>
-                      )
+                    {team?.logo_url ? (
+                      <img src={team.logo_url} alt="Logo" className="w-full h-full object-cover" />
                     ) : (
-                      nextMatch.opponent_logo ? (
-                        <img src={nextMatch.opponent_logo} alt="Logo adverse" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-bold text-sm text-sky-900">{nextMatch.opponent.replace('ASC ', '')}</span>
-                      )
+                      <span className="font-bold text-lg text-sky-600">{team?.name?.substring(0, 2).toUpperCase() || 'SA'}</span>
                     )}
                   </div>
-                  <span className="text-xs text-sky-800">{nextMatch.is_home ? (team?.name || 'Sama ASC') : nextMatch.opponent}</span>
+                  <span className="text-xs text-sky-800">{team?.name || 'Sama ASC'}</span>
                 </div>
                 <div className="text-center px-3">
                   <span className="text-3xl font-bold bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">VS</span>
@@ -249,21 +241,13 @@ export default function AccueilPage() {
                 </div>
                 <div className="text-center">
                   <div className="w-14 h-14 rounded-xl bg-indigo-600/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-inner overflow-hidden border border-indigo-400/30">
-                    {nextMatch.is_home ? (
-                      nextMatch.opponent_logo ? (
-                        <img src={nextMatch.opponent_logo} alt="Logo adverse" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-bold text-sm text-sky-900">{nextMatch.opponent.replace('ASC ', '')}</span>
-                      )
+                    {nextMatch.opponent_logo ? (
+                      <img src={nextMatch.opponent_logo} alt="Logo adverse" className="w-full h-full object-cover" />
                     ) : (
-                      team?.logo_url ? (
-                        <img src={team.logo_url} alt="Logo" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-bold text-lg text-sky-600">{team?.name?.substring(0, 2).toUpperCase() || 'SA'}</span>
-                      )
+                      <span className="font-bold text-sm text-sky-900">{nextMatch.opponent.replace('ASC ', '')}</span>
                     )}
                   </div>
-                  <span className="text-xs text-sky-800">{nextMatch.is_home ? nextMatch.opponent : (team?.name || 'Sama ASC')}</span>
+                  <span className="text-xs text-sky-800">{nextMatch.opponent}</span>
                 </div>
               </div>
               <div className="flex items-center justify-center gap-4 text-sm text-sky-800">
