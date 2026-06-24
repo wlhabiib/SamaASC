@@ -331,7 +331,7 @@ export default function ResultatsPage() {
                           <span className="font-bold text-sm text-white">{team?.name?.substring(0, 2).toUpperCase() || 'SA'}</span>
                         )}
                       </div>
-                      <div className="font-bold text-white text-sm">Sama ASC</div>
+                      <div className="font-bold text-white text-sm">{team?.name || 'Sama ASC'}</div>
                     </div>
                     <div className="flex items-center gap-2 px-2">
                       <span className={`text-2xl font-bold text-white ${
