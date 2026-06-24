@@ -296,10 +296,15 @@ export default function AdminPage() {
 
   const handleStandingSubmit = async () => {
     if (!team) return;
-    
+
+    if (!standingsComp) {
+      alert('Veuillez sélectionner une compétition');
+      return;
+    }
+
     try {
       const payload = {
-        competition_name: form.competition_name,
+        competition_name: standingsComp,
         team_name: form.team_name, points: parseInt(form.points) || 0, played: parseInt(form.played) || 0,
         won: parseInt(form.won) || 0, drawn: parseInt(form.drawn) || 0, lost: parseInt(form.lost) || 0,
         goals_for: parseInt(form.goals_for) || 0, goals_against: parseInt(form.goals_against) || 0,
@@ -723,10 +728,11 @@ export default function AdminPage() {
                   <button onClick={() => { setShowForm(false); setEditing(null); setForm({}); }} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
                 </div>
                 <Input label="Nom" field="name" placeholder="Nom du coach" value={form.name || ''} onChange={(value) => setForm(prev => ({ ...prev, name: value }))} />
-                <FileUpload 
+                <FileUpload
                   value={form.photo_url || null}
                   onChange={(url) => setForm(prev => ({ ...prev, photo_url: url }))}
                   label="Photo"
+                  teamId={team?.id}
                 />
                 <Input label="Rôle" field="role" placeholder="Entraineur" value={form.role || ''} onChange={(value) => setForm(prev => ({ ...prev, role: value }))} />
                 <button onClick={handleCoachSubmit} className="relative overflow-hidden w-full py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg" style={{
@@ -769,10 +775,11 @@ export default function AdminPage() {
                   <button onClick={() => { setShowForm(false); setEditing(null); setForm({}); }} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
                 </div>
                 <Input label="Nom" field="name" placeholder="Nom du joueur" value={form.name || ''} onChange={(value) => setForm(prev => ({ ...prev, name: value }))} />
-                <FileUpload 
+                <FileUpload
                   value={form.photo_url || null}
                   onChange={(url) => setForm(prev => ({ ...prev, photo_url: url }))}
                   label="Photo"
+                  teamId={team?.id}
                 />
                 <Select label="Poste" field="position" options={[
                   { value: 'GK', label: 'Gardien' }, { value: 'DEF', label: 'Défenseur' },
@@ -835,7 +842,7 @@ export default function AdminPage() {
                 </div>
                 <Input label="Adversaire" field="opponent" placeholder="ASC..." value={form.opponent || ''} onChange={(value) => setForm(prev => ({ ...prev, opponent: value }))} />
                 <div>
-                  <FileUpload value={form.opponent_logo || null} onChange={(url) => setForm(prev => ({ ...prev, opponent_logo: url }))} label="Logo adverse" />
+                  <FileUpload value={form.opponent_logo || null} onChange={(url) => setForm(prev => ({ ...prev, opponent_logo: url }))} label="Logo adverse" teamId={team?.id} />
                 </div>
                 <Input label="Date" field="match_date" type="date" value={form.match_date || ''} onChange={(value) => setForm(prev => ({ ...prev, match_date: value }))} />
                 <Input label="Heure" field="match_time" type="time" value={form.match_time || ''} onChange={(value) => setForm(prev => ({ ...prev, match_time: value }))} />
@@ -1122,7 +1129,7 @@ export default function AdminPage() {
               </div>
             </div>
             {!showForm && (
-              <button onClick={() => { setShowForm(true); setEditing(null); setForm({ competition_name: standingsComp || '' }); }}
+              <button onClick={() => { setShowForm(true); setEditing(null); setForm({}); }}
                 className="relative overflow-hidden w-full py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg" style={{
                   background: `linear-gradient(135deg, ${team?.secondary_color || '#e0f2fe'} 0%, ${team?.primary_color || '#020617'} 50%, ${team?.secondary_color || '#e0f2fe'} 100%)`,
                   borderColor: '#0ea5e9',
@@ -1141,7 +1148,6 @@ export default function AdminPage() {
                   <h3 className="text-sm font-bold">{editing ? 'Modifier' : 'Ajouter'} classement</h3>
                   <button onClick={() => { setShowForm(false); setEditing(null); setForm({}); }} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
                 </div>
-                <Input label="Compétition" field="competition_name" placeholder="Championnat..." value={form.competition_name || ''} onChange={(value) => setForm(prev => ({ ...prev, competition_name: value }))} />
                 <Input label="Équipe" field="team_name" placeholder="Nom équipe" value={form.team_name || ''} onChange={(value) => setForm(prev => ({ ...prev, team_name: value }))} />
                 <Input label="Position" field="position" type="number" value={form.position || ''} onChange={(value) => setForm(prev => ({ ...prev, position: value }))} />
                 <div className="grid grid-cols-3 gap-3">
@@ -1195,7 +1201,7 @@ export default function AdminPage() {
                     <div className="text-xs text-gray-600 text-center">{s.goals_against}</div>
                     <div className="text-xs font-bold text-gray-600 text-center">{s.goals_for - s.goals_against}</div>
                     <div className="col-span-7 flex gap-1 mt-1">
-                      <button onClick={() => startEdit(s, ['competition_name','team_name','position','points','played','won','drawn','lost','goals_for','goals_against'])} className="p-1 text-gray-400 hover:text-blue-500 transition-colors"><Edit2 size={12} /></button>
+                      <button onClick={() => startEdit(s, ['team_name','position','points','played','won','drawn','lost','goals_for','goals_against'])} className="p-1 text-gray-400 hover:text-blue-500 transition-colors"><Edit2 size={12} /></button>
                       <button onClick={() => handleDelete('standings', s.id)} className="p-1 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>
                     </div>
                   </div>
