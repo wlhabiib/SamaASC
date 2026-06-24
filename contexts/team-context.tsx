@@ -165,8 +165,6 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    refreshTeam(true);
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setCurrentUser(session.user);
@@ -175,6 +173,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         setCurrentUser(null);
         setTeam(null);
         setTeamUser(null);
+        setLoading(false);
       }
     });
 

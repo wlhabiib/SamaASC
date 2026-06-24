@@ -32,39 +32,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const refreshUserInfo = async () => {
     try {
       setLoading(true);
-      console.log('Début de refreshUserInfo');
-      
+
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session:', session);
-      
+
       if (!session?.user) {
-        console.log('Aucune session utilisateur');
         setUser(null);
         setUserRole(null);
         setTeamId(null);
-        setLoading(false);
         return;
       }
 
       setUser(session.user);
-      console.log('Utilisateur authentifié:', session.user.id);
 
-      // Récupérer les informations de l'utilisateur depuis Supabase
-      console.log('Récupération des informations team_members pour user_id:', session.user.id);
-      const { data: teamMember, error } = await supabase
+      const { data: teamMember } = await supabase
         .from('team_members')
         .select('team_id, role')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      console.log('Résultat team_members:', { teamMember, error: error?.message });
-
       if (!teamMember) {
-        console.log('Team member not found for user_id:', session.user.id);
         setUserRole(null);
         setTeamId(null);
       } else {
-        console.log('Team member trouvé:', teamMember);
         setUserRole(teamMember.role as 'owner' | 'admin' | 'member');
         setTeamId(teamMember.team_id);
       }
@@ -74,14 +63,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setUserRole(null);
       setTeamId(null);
     } finally {
-      console.log('Fin de refreshUserInfo');
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    refreshUserInfo();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user);
@@ -90,6 +76,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setUserRole(null);
         setTeamId(null);
+        setLoading(false);
       }
     });
 
