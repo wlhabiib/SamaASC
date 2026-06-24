@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Player, Coach, PlayerStat, MatchLineup, Match, POSITION_LABELS } from '@/lib/types';
+import { Player, Coach, PlayerStat, MatchLineup, Match, Competition, POSITION_LABELS } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
 import { fetchWithCache } from '@/utils/cache';
@@ -59,6 +59,7 @@ export default function EquipePage() {
   const [stats, setStats] = useState<PlayerStat[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [lineups, setLineups] = useState<MatchLineup[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'field' | 'list' | 'stats'>('field');
   const [statsComp, setStatsComp] = useState<string>('all');
@@ -85,12 +86,13 @@ export default function EquipePage() {
       if (!team) return;
 
       try {
-        const [p, c, s, m, l] = await Promise.all([
+        const [p, c, s, m, l, comp] = await Promise.all([
           fetchWithCache<Player[]>(`/api/data/players?team_id=${team.id}`, `players_${team.id}`),
           fetchWithCache<Coach>(`/api/data/coach?team_id=${team.id}`, `coach_${team.id}`),
           fetchWithCache<PlayerStat[]>(`/api/data/player-stats?team_id=${team.id}`, `stats_${team.id}`),
           fetchWithCache<Match[]>(`/api/data/matches?team_id=${team.id}`, `matches_${team.id}`),
           fetchWithCache<MatchLineup[]>(`/api/data/match-lineup?team_id=${team.id}`, `lineups_${team.id}`),
+          fetchWithCache<Competition[]>(`/api/data/competitions?team_id=${team.id}`, `competitions_${team.id}`),
         ]);
 
         setPlayers(p);
@@ -98,6 +100,7 @@ export default function EquipePage() {
         setStats(s);
         setMatches(m);
         setLineups(l);
+        setCompetitions(comp || []);
 
         // Auto-select next upcoming match
         const upcoming = m.find(m => m.status === 'upcoming');
@@ -144,8 +147,8 @@ export default function EquipePage() {
     : players.filter(p => !starters.includes(p));
 
   const formationPositions = FORMATIONS[selectedFormation] || FORMATIONS['4-3-3'];
-  const competitions = Array.from(new Set(stats.map(s => s.competition_name)));
-  const filteredStats = statsComp === 'all' ? stats : stats.filter(s => s.competition_name === statsComp);
+  const competitionNames = competitions.map(c => c.name);
+  const filteredStats = statsComp === 'all' ? stats : stats.filter(s => (s as any).season === statsComp);
 
   // Aggregate stats per player
   const aggregated: { player: Player; goals: number; assists: number; matches: number }[] = [];
@@ -531,7 +534,7 @@ export default function EquipePage() {
                 )}
                 <span className="relative z-10">Toutes</span>
               </button>
-              {competitions.map(c => (
+              {competitionNames.map(c => (
                 <button
                   key={c}
                   onClick={() => setStatsComp(c)}

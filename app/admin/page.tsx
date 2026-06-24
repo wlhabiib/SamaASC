@@ -1275,7 +1275,7 @@ export default function AdminPage() {
               </div>
             )}
             <div className="space-y-2">
-              {playerStats.filter(s => !statsComp || s.competition_name === statsComp).map(s => {
+              {playerStats.filter(s => !statsComp || (s as any).season === statsComp).map(s => {
                 const player = players.find(p => p.id === s.player_id);
                 return (
                   <div key={s.id} className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-md">
@@ -1284,14 +1284,14 @@ export default function AdminPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm text-gray-900 truncate">{player?.name || 'Inconnu'}</div>
-                      <div className="text-xs text-gray-400">{s.competition_name}</div>
+                      <div className="text-xs text-gray-400">{(s as any).season}</div>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
                       <span className="flex items-center gap-0.5 font-bold text-green-600">{s.goals} <Target size={10} /></span>
                       <span className="text-gray-200">|</span>
                       <span className="font-bold text-blue-600">{s.assists} P</span>
                     </div>
-                    <button onClick={() => startEdit(s, ['player_id','competition_name','goals','assists','matches_played'])} className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"><Edit2 size={14} /></button>
+                    <button onClick={() => startEdit(s, ['player_id','season','goals','assists','matches_played'])} className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"><Edit2 size={14} /></button>
                     <button onClick={() => handleDelete('player_stats', s.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                   </div>
                 );

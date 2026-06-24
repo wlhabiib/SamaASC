@@ -102,7 +102,7 @@ export interface Supporter {
 export interface PlayerStat {
   id: string;
   player_id: string;
-  competition_name: string;
+  season: string;
   goals: number;
   assists: number;
   matches_played: number;
