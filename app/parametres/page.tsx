@@ -270,7 +270,7 @@ export default function ParametresPage() {
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg icon-hover relative overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, #e0f2fe 0%, #0ea5e9 50%, #0284c7 100%)',
+              background: `linear-gradient(135deg, ${team?.secondary_color || '#e0f2fe'} 0%, ${team?.primary_color || '#0ea5e9'} 50%, ${team?.secondary_color || '#e0f2fe'} 100%)`,
               boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
             }}
           >
@@ -281,7 +281,7 @@ export default function ParametresPage() {
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-black drop-shadow-md">Paramètres</h1>
+            <h1 className="text-2xl font-bold drop-shadow-md" style={{ color: team?.primary_color || '#020617' }}>Paramètres</h1>
             <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Personnalisation de l'équipe</p>
           </div>
         </div>

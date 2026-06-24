@@ -193,7 +193,7 @@ export default function EquipePage() {
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg icon-hover relative overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, #e0f2fe 0%, #0ea5e9 50%, #0284c7 100%)',
+              background: `linear-gradient(135deg, ${team?.secondary_color || '#e0f2fe'} 0%, ${team?.primary_color || '#0ea5e9'} 50%, ${team?.secondary_color || '#e0f2fe'} 100%)`,
               boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
             }}
           >
@@ -204,7 +204,7 @@ export default function EquipePage() {
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-black drop-shadow-md">Mon Équipe</h1>
+            <h1 className="text-2xl font-bold drop-shadow-md" style={{ color: team?.primary_color || '#020617' }}>Mon Équipe</h1>
             <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Joueurs et composition</p>
           </div>
         </div>
@@ -512,10 +512,10 @@ export default function EquipePage() {
         {view === 'stats' && (
           <div className="space-y-4">
             {/* Competition filter */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <button
                 onClick={() => setStatsComp('all')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 relative overflow-hidden ${
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 relative overflow-hidden ${
                   statsComp === 'all'
                     ? 'text-white shadow-lg'
                     : 'bg-white text-gray-600 shadow-sm hover:shadow-md'
@@ -538,7 +538,7 @@ export default function EquipePage() {
                 <button
                   key={c}
                   onClick={() => setStatsComp(c)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 relative overflow-hidden ${
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 relative overflow-hidden ${
                     statsComp === c
                       ? 'text-white shadow-lg'
                       : 'bg-white text-gray-600 shadow-sm hover:shadow-md'

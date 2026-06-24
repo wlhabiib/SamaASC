@@ -165,7 +165,7 @@ export default function AccueilPage() {
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg icon-hover relative overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, #e0f2fe 0%, #0ea5e9 50%, #0284c7 100%)',
+              background: `linear-gradient(135deg, ${team?.secondary_color || '#e0f2fe'} 0%, ${team?.primary_color || '#0ea5e9'} 50%, ${team?.secondary_color || '#e0f2fe'} 100%)`,
               boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
             }}
           >
@@ -176,7 +176,7 @@ export default function AccueilPage() {
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-black drop-shadow-md">Accueil</h1>
+            <h1 className="text-2xl font-bold drop-shadow-md" style={{ color: team?.primary_color || '#020617' }}>Accueil</h1>
             <p className="text-sm drop-shadow-sm" style={{ color: team?.primary_color || '#020617' }}>Bienvenue sur {team?.name || 'votre ASC'}</p>
           </div>
         </div>
@@ -205,80 +205,82 @@ export default function AccueilPage() {
 
         {/* Hero / Next Match Banner */}
         {nextMatch && (
-          <div 
-            className="relative overflow-hidden rounded-2xl p-5 text-white shadow-2xl"
-            style={{ 
-              background: 'linear-gradient(135deg, #020617, #071A3D, #2D0A5B)'
+          <div
+            className="relative overflow-hidden rounded-2xl p-5 shadow-2xl border border-sky-300"
+            style={{
+              background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #020617 100%)',
+              boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
             }}
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#22D3EE]/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#8B5CF6]/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-sky-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-sky-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#22D3EE]/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
             <div className="relative">
               <div className="flex items-center gap-2 mb-3">
-                <div className="px-2 py-0.5 bg-[#22D3EE]/20 rounded-full text-xs font-medium backdrop-blur-sm border border-[#22D3EE]/30">
+                <div className="px-2 py-0.5 bg-sky-600/20 rounded-full text-xs font-medium backdrop-blur-sm border border-sky-400/30">
                   Prochain Match
                 </div>
-                <span className="text-[#22D3EE] text-xs">{daysUntil(nextMatch.match_date)}</span>
+                <span className="text-sky-600 text-xs">{daysUntil(nextMatch.match_date)}</span>
               </div>
               <div className="flex items-center justify-between mb-4">
                 <div className="text-center">
-                  <div className="w-14 h-14 rounded-xl bg-[#22D3EE]/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-inner overflow-hidden border border-[#22D3EE]/30">
+                  <div className="w-14 h-14 rounded-xl bg-sky-600/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-inner overflow-hidden border border-sky-400/30">
                     {!nextMatch.is_home ? (
                       team?.logo_url ? (
                         <img src={team.logo_url} alt="Logo" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="font-bold text-lg text-[#22D3EE]">{team?.name?.substring(0, 2).toUpperCase() || 'SA'}</span>
+                        <span className="font-bold text-lg text-sky-600">{team?.name?.substring(0, 2).toUpperCase() || 'SA'}</span>
                       )
                     ) : (
                       nextMatch.opponent_logo ? (
                         <img src={nextMatch.opponent_logo} alt="Logo adverse" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="font-bold text-sm text-white">{nextMatch.opponent.replace('ASC ', '')}</span>
+                        <span className="font-bold text-sm text-sky-900">{nextMatch.opponent.replace('ASC ', '')}</span>
                       )
                     )}
                   </div>
-                  <span className="text-xs text-white/70">{!nextMatch.is_home ? (team?.name || 'Sama ASC') : nextMatch.opponent}</span>
+                  <span className="text-xs text-sky-800">{!nextMatch.is_home ? (team?.name || 'Sama ASC') : nextMatch.opponent}</span>
                 </div>
                 <div className="text-center px-3">
-                  <span className="text-3xl font-bold bg-gradient-to-r from-[#22D3EE] via-[#3B82F6] to-[#8B5CF6] bg-clip-text text-transparent">VS</span>
-                  <div className="text-xs text-white/70 mt-1">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">VS</span>
+                  <div className="text-xs text-sky-700 mt-1">
                     {nextMatch.competition || 'Amical'}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="w-14 h-14 rounded-xl bg-[#8B5CF6]/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-inner overflow-hidden border border-[#8B5CF6]/30">
+                  <div className="w-14 h-14 rounded-xl bg-indigo-600/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-inner overflow-hidden border border-indigo-400/30">
                     {!nextMatch.is_home ? (
                       nextMatch.opponent_logo ? (
                         <img src={nextMatch.opponent_logo} alt="Logo adverse" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="font-bold text-sm text-white">{nextMatch.opponent.replace('ASC ', '')}</span>
+                        <span className="font-bold text-sm text-sky-900">{nextMatch.opponent.replace('ASC ', '')}</span>
                       )
                     ) : (
                       team?.logo_url ? (
                         <img src={team.logo_url} alt="Logo" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="font-bold text-lg text-[#22D3EE]">{team?.name?.substring(0, 2).toUpperCase() || 'SA'}</span>
+                        <span className="font-bold text-lg text-sky-600">{team?.name?.substring(0, 2).toUpperCase() || 'SA'}</span>
                       )
                     )}
                   </div>
-                  <span className="text-xs text-white/70">{!nextMatch.is_home ? nextMatch.opponent : (team?.name || 'Sama ASC')}</span>
+                  <span className="text-xs text-sky-800">{!nextMatch.is_home ? nextMatch.opponent : (team?.name || 'Sama ASC')}</span>
                 </div>
               </div>
-              <div className="flex items-center justify-center gap-4 text-sm text-white/80">
+              <div className="flex items-center justify-center gap-4 text-sm text-sky-800">
                 <div className="flex items-center gap-1.5">
-                  <Calendar size={14} className="text-[#22D3EE]" />
+                  <Calendar size={14} className="text-sky-600" />
                   <span>{formatDate(nextMatch.match_date)}</span>
                 </div>
                 {nextMatch.match_time && (
                   <div className="flex items-center gap-1.5">
-                    <Clock size={14} className="text-[#22D3EE]" />
+                    <Clock size={14} className="text-sky-600" />
                     <span>{nextMatch.match_time}</span>
                   </div>
                 )}
               </div>
               {nextMatch.venue && (
-                <div className="flex items-center justify-center gap-1.5 text-sm text-white/70 mt-1.5">
-                  <MapPin size={14} className="text-[#22D3EE]" />
+                <div className="flex items-center justify-center gap-1.5 text-sm text-sky-700 mt-1.5">
+                  <MapPin size={14} className="text-sky-600" />
                   <span>{nextMatch.venue}</span>
                 </div>
               )}
