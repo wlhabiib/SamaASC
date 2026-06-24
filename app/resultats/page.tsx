@@ -262,7 +262,8 @@ export default function ResultatsPage() {
 
         {filteredMatches.map((match) => {
           const motm = getManOfMatch(match.id);
-          const userHasVoted = votes.some(v => v.match_id === match.id && v.voter_name === user?.email);
+          const allVotes = [...votes, ...localVotes];
+          const userHasVoted = allVotes.some(v => v.match_id === match.id && v.voter_name === user?.email);
           const votingOpen = isVotingOpen(match.match_date);
           const remaining = timeRemaining[match.id] || 0;
 
