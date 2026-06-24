@@ -150,38 +150,56 @@ export default function ResultatsPage() {
 
   const filteredMatches = matches.filter(m => m.status === 'completed' && (!selectedCompetition || m.competition === selectedCompetition));
 
-  // Calculate vote end time (1 hour after match completion)
-  const getVoteEndTime = (matchDate: string) => {
-    const matchDateObj = new Date(matchDate + 'T00:00:00');
-    return new Date(matchDateObj.getTime() + 60 * 60 * 1000); // 1 hour in milliseconds
-  };
+  // Store vote end times for each match (3 hours from when match was completed)
+  const [voteEndTimes, setVoteEndTimes] = useState<Record<string, Date>>({});
+
+  // Initialize vote end times when matches load
+  useEffect(() => {
+    const newEndTimes: Record<string, Date> = {};
+    filteredMatches.forEach(match => {
+      if (!voteEndTimes[match.id]) {
+        // Set end time to 3 hours from now for newly completed matches
+        newEndTimes[match.id] = new Date(Date.now() + 3 * 60 * 60 * 1000);
+      }
+    });
+    if (Object.keys(newEndTimes).length > 0) {
+      setVoteEndTimes(prev => ({ ...prev, ...newEndTimes }));
+    }
+  }, [filteredMatches]);
 
   // Update countdown timers
   useEffect(() => {
     const interval = setInterval(() => {
       const newTimes: Record<string, number> = {};
       filteredMatches.forEach(match => {
-        const endTime = getVoteEndTime(match.match_date);
-        const now = new Date();
-        const remaining = Math.max(0, endTime.getTime() - now.getTime());
-        newTimes[match.id] = remaining;
+        const endTime = voteEndTimes[match.id];
+        if (endTime) {
+          const now = new Date();
+          const remaining = Math.max(0, endTime.getTime() - now.getTime());
+          newTimes[match.id] = remaining;
+        }
       });
       setTimeRemaining(newTimes);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [filteredMatches]);
+  }, [filteredMatches, voteEndTimes]);
 
   // Format countdown
   const formatCountdown = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
+    if (hours > 0) {
+      return `${hours}h ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   // Check if voting is still open
-  const isVotingOpen = (matchDate: string) => {
-    const endTime = getVoteEndTime(matchDate);
+  const isVotingOpen = (matchId: string) => {
+    const endTime = voteEndTimes[matchId];
+    if (!endTime) return false;
     return new Date() < endTime;
   };
 
@@ -264,7 +282,7 @@ export default function ResultatsPage() {
           const motm = getManOfMatch(match.id);
           const allVotes = [...votes, ...localVotes];
           const userHasVoted = allVotes.some(v => v.match_id === match.id && v.voter_name === user?.email);
-          const votingOpen = isVotingOpen(match.match_date);
+          const votingOpen = isVotingOpen(match.id);
           const remaining = timeRemaining[match.id] || 0;
 
           return (
