@@ -108,38 +108,53 @@ export default function AdminPage() {
     if (!team) return;
     setLoading(true);
     try {
-      const [p, m, a, s, g, c, ps, l, comp, u] = await Promise.all([
-        fetch(`/api/data/players?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/matches?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/announcements?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/standings?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/gallery?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/coach?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/player-stats?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/match-lineup?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/competitions?team_id=${team.id}`).then(r => r.json()),
-        fetch(`/api/data/users?team_id=${team.id}`).then(r => r.json()).catch(() => []),
+      // Load essential data first (coach, competitions)
+      const [c, comp] = await Promise.all([
+        fetch(`/api/data/coach?team_id=${team.id}`).then(r => r.json()).catch(() => null),
+        fetch(`/api/data/competitions?team_id=${team.id}`).then(r => r.json()).catch(() => []),
       ]);
-      
-      setPlayers(p);
-      setMatches(m);
-      setAnnouncements(a);
-      setStandings(s);
-      setGallery(g);
-      setPlayerStats(ps);
-      setLineups(l);
-      setCompetitions(comp || []);
-      setUsers(u || []);
+
       if (c) setCoach(c);
-      if (s && s.length > 0) setStandingsComp(s[0].competition_name);
+      setCompetitions(comp || []);
+
+      // Load tab-specific data based on current tab
+      const tabLoaders: Record<Tab, Promise<any>> = {
+        coach: Promise.resolve(null),
+        players: fetch(`/api/data/players?team_id=${team.id}`).then(r => r.json()),
+        matches: fetch(`/api/data/matches?team_id=${team.id}`).then(r => r.json()),
+        lineup: fetch(`/api/data/match-lineup?team_id=${team.id}`).then(r => r.json()),
+        announcements: fetch(`/api/data/announcements?team_id=${team.id}`).then(r => r.json()),
+        standings: fetch(`/api/data/standings?team_id=${team.id}`).then(r => r.json()),
+        stats: fetch(`/api/data/player-stats?team_id=${team.id}`).then(r => r.json()),
+        gallery: fetch(`/api/data/gallery?team_id=${team.id}`).then(r => r.json()),
+        competitions: Promise.resolve(comp || []),
+        users: fetch(`/api/data/users?team_id=${team.id}`).then(r => r.json()).catch(() => []),
+        settings: Promise.resolve(null),
+      };
+
+      const currentTabData = await tabLoaders[tab];
+
+      // Set data based on tab
+      if (tab === 'players') setPlayers(currentTabData);
+      if (tab === 'matches') setMatches(currentTabData);
+      if (tab === 'lineup') setLineups(currentTabData);
+      if (tab === 'announcements') setAnnouncements(currentTabData);
+      if (tab === 'standings') {
+        setStandings(currentTabData);
+        if (currentTabData && currentTabData.length > 0) setStandingsComp(currentTabData[0].competition_name);
+      }
+      if (tab === 'stats') setPlayerStats(currentTabData);
+      if (tab === 'gallery') setGallery(currentTabData);
+      if (tab === 'users') setUsers(currentTabData || []);
+
       setLoading(false);
     } catch (error) {
       console.error('Error loading data:', error);
       setLoading(false);
     }
-  }, [team]);
+  }, [team, tab]);
 
-  useEffect(() => { loadAll(); }, [team]);
+  useEffect(() => { loadAll(); }, [team, tab, loadAll]);
 
   // Early returns after all hooks
   if (userLoading) {
