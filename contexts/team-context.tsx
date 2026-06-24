@@ -88,19 +88,15 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     const now = Date.now();
     // Skip refresh if less than 30 seconds ago and not forced
     if (!force && lastRefresh && now - lastRefresh < 30000) {
-      console.log('⏭️ Skipping refresh (cached data is fresh)');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('🔄 Début de refreshTeam');
 
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('📱 Session:', { hasSession: !!session, userId: session?.user?.id, email: session?.user?.email });
 
       if (!session?.user) {
-        console.log('⚠️ Aucune session utilisateur');
         setTeam(null);
         setTeamUser(null);
         setCurrentUser(null);
@@ -109,59 +105,42 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       }
 
       setCurrentUser(session.user);
-      console.log('✅ Utilisateur authentifié:', session.user.id);
 
       // Récupérer les informations de l'utilisateur depuis Supabase
-      console.log('🔍 Récupération des informations team_members pour user_id:', session.user.id);
       let { data: teamMember, error: memberError } = await supabase
         .from('team_members')
         .select('*')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      console.log('📊 Résultat team_members par user_id:', { found: !!teamMember, error: memberError?.message });
-
       // Fallback: If not found by user_id, try searching by email
-      // (This can happen if the user_id hasn't been updated yet from the placeholder)
       if (!teamMember && session.user.email) {
-        console.log('⚠️ Team member not found by user_id, trying fallback by email:', session.user.email);
-        const { data: teamMemberByEmail, error: emailError } = await supabase
+        const { data: teamMemberByEmail } = await supabase
           .from('team_members')
           .select('*')
           .eq('email', session.user.email)
           .maybeSingle();
 
-        console.log('📊 Résultat team_members par email:', { found: !!teamMemberByEmail, error: emailError?.message });
-
         if (teamMemberByEmail) {
-          console.log('✅ Team member found by email, updating user_id...');
           teamMember = teamMemberByEmail;
 
           // Update the user_id to the correct Supabase Auth ID
-          const { error: updateError } = await supabase
+          await supabase
             .from('team_members')
             .update({ user_id: session.user.id })
             .eq('id', teamMember.id);
 
-          if (updateError) {
-            console.error('❌ Error updating team_member user_id:', updateError.message);
-          } else {
-            console.log('✅ Successfully updated team_member user_id');
-            teamMember = { ...teamMember, user_id: session.user.id };
-          }
+          teamMember = { ...teamMember, user_id: session.user.id };
         }
       }
 
       if (!teamMember) {
-        console.log('❌ No team member found for user:', session.user.id);
         setTeam(null);
         setTeamUser(null);
       } else {
-        console.log('✅ Team member trouvé:', teamMember);
         setTeamUser(teamMember as TeamUser);
 
         // Récupérer les informations de l'équipe depuis Supabase
-        console.log('🔍 Récupération des informations teams pour team_id:', teamMember.team_id);
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
           .select('*')
@@ -169,10 +148,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
 
         if (teamError || !teamData) {
-          console.error('❌ Erreur récupération team:', teamError?.message || 'Team non trouvée');
           setTeam(null);
         } else {
-          console.log('✅ Team trouvée et chargée:', teamData.name);
           setTeam(teamData as Team);
         }
       }
@@ -183,7 +160,6 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       setTeam(null);
       setTeamUser(null);
     } finally {
-      console.log('✅ Fin de refreshTeam');
       setLoading(false);
     }
   };
