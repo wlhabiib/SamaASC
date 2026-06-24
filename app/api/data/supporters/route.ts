@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const team_id = searchParams.get('team_id');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const offset = parseInt(searchParams.get('offset') || '0');
 
     if (!team_id) {
       return NextResponse.json({ error: 'Missing team_id' }, { status: 400 });
@@ -21,9 +23,10 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('supporters')
-      .select('*')
+      .select('id, name, message, profile_photo_url, message_type, voice_url, sticker_url, created_at')
       .eq('team_id', team_id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       console.error('Error fetching supporters:', error);

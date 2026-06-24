@@ -106,18 +106,18 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
       setCurrentUser(session.user);
 
-      // Récupérer les informations de l'utilisateur depuis Supabase
+      // Récupérer les informations de l'utilisateur depuis Supabase (parallel queries)
       let { data: teamMember, error: memberError } = await supabase
         .from('team_members')
-        .select('*')
+        .select('id, team_id, user_id, email, first_name, last_name, profile_photo_url, role, is_active')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      // Fallback: If not found by user_id, try searching by email
+      // Fallback: If not found by user_id, try searching by email (only if needed)
       if (!teamMember && session.user.email) {
         const { data: teamMemberByEmail } = await supabase
           .from('team_members')
-          .select('*')
+          .select('id, team_id, user_id, email, first_name, last_name, profile_photo_url, role, is_active')
           .eq('email', session.user.email)
           .maybeSingle();
 
@@ -140,10 +140,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       } else {
         setTeamUser(teamMember as TeamUser);
 
-        // Récupérer les informations de l'équipe depuis Supabase
+        // Récupérer les informations de l'équipe depuis Supabase (optimized select)
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
-          .select('*')
+          .select('id, organization_id, name, slug, logo_url, team_photo_url, primary_color, secondary_color, accent_color, nav_color, description')
           .eq('id', teamMember.team_id)
           .maybeSingle();
 

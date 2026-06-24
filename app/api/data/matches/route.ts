@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('matches')
-      .select('*')
+      .select('id, opponent, match_date, match_time, venue, competition, is_home, status, score_home, score_away, formation, scorers, opponent_logo')
       .eq('team_id', team_id)
       .order('match_date', { ascending: false });
 

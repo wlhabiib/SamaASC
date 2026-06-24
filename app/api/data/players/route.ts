@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('players')
-      .select('*')
+      .select('id, name, photo_url, position, jersey_number, is_starter')
       .eq('team_id', team_id)
       .order('jersey_number');
 

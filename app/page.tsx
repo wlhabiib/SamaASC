@@ -61,7 +61,7 @@ export default function AccueilPage() {
     }
   }, [team, user, contextLoading, router]);
 
-  // Data loading
+  // Data loading - non-blocking pattern
   useEffect(() => {
     async function load() {
       if (!team) return;
@@ -138,7 +138,8 @@ export default function AccueilPage() {
 
   const upcomingMatches = allMatches.filter(m => m.status === 'upcoming' || m.status === 'live');
 
-  if (loading || contextLoading) {
+  // Show loading state only during initial authentication check
+  if (contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">
