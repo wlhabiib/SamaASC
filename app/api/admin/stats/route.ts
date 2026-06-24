@@ -19,11 +19,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Use competition_name as season for the unique constraint
+    const season = competition_name || '2024-2025';
+
     const { data, error } = await supabase
       .from('player_stats')
       .insert({ 
         player_id,
-        competition_name,
+        season,
         goals: parseInt(goals) || 0,
         assists: parseInt(assists) || 0,
         matches_played: parseInt(matches_played) || 0,
@@ -51,11 +54,14 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Use competition_name as season for the unique constraint
+    const season = competition_name || '2024-2025';
+
     const { data, error } = await supabase
       .from('player_stats')
       .update({ 
         player_id,
-        competition_name,
+        season,
         goals: parseInt(goals) || 0,
         assists: parseInt(assists) || 0,
         matches_played: parseInt(matches_played) || 0

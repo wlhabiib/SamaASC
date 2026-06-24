@@ -263,7 +263,7 @@ export default function ResultatsPage() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-center flex-1">
                         <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-inner overflow-hidden border border-white/30 mx-auto">
-                          {match.is_home ? (
+                          {!match.is_home ? (
                             team?.logo_url ? (
                               <img src={team.logo_url} alt="Logo" className="w-full h-full object-cover" />
                             ) : (
@@ -277,28 +277,28 @@ export default function ResultatsPage() {
                             )
                           )}
                         </div>
-                        <div className="font-bold text-white text-sm">{match.is_home ? 'Sama ASC' : match.opponent}</div>
+                        <div className="font-bold text-white text-sm">{!match.is_home ? 'Sama ASC' : match.opponent}</div>
                       </div>
                       <div className="flex items-center gap-2 px-2">
                         <span className={`text-2xl font-bold text-white ${
-                          match.is_home 
+                          !match.is_home 
                             ? (match.score_home !== null && match.score_home > (match.score_away || 0) ? 'text-green-400' : '')
                             : (match.score_away !== null && match.score_away > (match.score_home || 0) ? 'text-green-400' : '')
                         }`}>
-                          {match.is_home ? (match.score_home ?? '-') : (match.score_away ?? '-')}
+                          {!match.is_home ? (match.score_home ?? '-') : (match.score_away ?? '-')}
                         </span>
                         <span className="text-white/60 text-xl">-</span>
                         <span className={`text-2xl font-bold text-white ${
-                          match.is_home
+                          !match.is_home
                             ? (match.score_home !== null && match.score_home < (match.score_away || 0) ? 'text-green-400' : '')
                             : (match.score_away !== null && match.score_away < (match.score_home || 0) ? 'text-green-400' : '')
                         }`}>
-                          {match.is_home ? (match.score_away ?? '-') : (match.score_home ?? '-')}
+                          {!match.is_home ? (match.score_away ?? '-') : (match.score_home ?? '-')}
                         </span>
                       </div>
                       <div className="text-center flex-1">
                         <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-inner overflow-hidden border border-white/30 mx-auto">
-                          {match.is_home ? (
+                          {!match.is_home ? (
                             match.opponent_logo ? (
                               <img src={match.opponent_logo} alt="Logo adverse" className="w-full h-full object-cover" />
                             ) : (
@@ -312,7 +312,7 @@ export default function ResultatsPage() {
                             )
                           )}
                         </div>
-                        <div className="font-bold text-white text-sm">{match.is_home ? match.opponent : 'Sama ASC'}</div>
+                        <div className="font-bold text-white text-sm">{!match.is_home ? match.opponent : 'Sama ASC'}</div>
                       </div>
                     </div>
 
