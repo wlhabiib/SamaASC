@@ -78,42 +78,6 @@ export default function AdminPage() {
   const [standingsComp, setStandingsComp] = useState<string>('');
   const [statsComp, setStatsComp] = useState<string>('');
 
-  // Check if user is admin, redirect if not
-  useEffect(() => {
-    if (!userLoading && userRole !== 'admin') {
-      router.push('/');
-    }
-  }, [userRole, userLoading, router]);
-
-  // Show loading or access denied while checking admin role
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#071A3D] to-[#2D0A5B] flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p>Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (userRole !== 'admin') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#071A3D] to-[#2D0A5B] flex items-center justify-center p-4">
-        <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 text-center max-w-md">
-          <ShieldAlert size={64} className="text-red-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Accès refusé</h2>
-          <p className="text-white/70 mb-6">Seuls les administrateurs peuvent accéder à cette page.</p>
-          <button
-            onClick={() => router.push('/')}
-            className="px-6 py-3 bg-gradient-to-r from-[#22D3EE] to-[#3B82F6] text-white rounded-xl font-medium hover:shadow-lg transition-all"
-          >
-            Retour à l'accueil
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   // Formation positions mapping
   const FORMATION_POSITIONS: Record<string, string[]> = {
@@ -122,6 +86,7 @@ export default function AdminPage() {
     '3-5-2': ['GK', 'CB', 'CB', 'CB', 'LWB', 'CDM', 'CM', 'CM', 'RWB', 'ST', 'ST'],
   };
 
+  // All hooks must be called before any early returns
   useEffect(() => {
     if (!contextLoading) {
       if (!team) {
@@ -176,36 +141,35 @@ export default function AdminPage() {
 
   useEffect(() => { loadAll(); }, [team]);
 
-  // Setup realtime subscriptions - DISABLED (Supabase removed)
-  useEffect(() => {
-    // if (!team || !supabase) return;
+  // Early returns after all hooks
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#071A3D] to-[#2D0A5B] flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p>Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
-    // const channels: any[] = [];
-    // const tables = ['players', 'matches', 'announcements', 'standings', 'gallery', 'coach', 'player_stats', 'match_lineup', 'competitions', 'users'];
-
-    // tables.forEach(table => {
-    //   const channel = supabase!
-    //     .channel(`${table}-changes`)
-    //     .on(
-    //       'postgres_changes',
-    //       {
-    //         event: '*',
-    //         schema: 'public',
-    //         table: table,
-    //         filter: `team_id=eq.${team.id}`,
-    //       },
-    //       () => {
-    //         loadAll();
-    //       }
-    //     )
-    //     .subscribe();
-    //   channels.push(channel);
-    // });
-
-    // return () => {
-    //   channels.forEach(channel => supabase!.removeChannel(channel));
-    // };
-  }, [team, loadAll]);
+  if (userRole !== 'admin') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#071A3D] to-[#2D0A5B] flex items-center justify-center p-4">
+        <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 text-center max-w-md">
+          <ShieldAlert size={64} className="text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Accès refusé</h2>
+          <p className="text-white/70 mb-6">Seuls les administrateurs peuvent accéder à cette page.</p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-6 py-3 bg-gradient-to-r from-[#22D3EE] to-[#3B82F6] text-white rounded-xl font-medium hover:shadow-lg transition-all"
+          >
+            Retour à l'accueil
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleDelete = async (table: string, id: string) => {
     if (!team) return;

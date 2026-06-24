@@ -44,6 +44,19 @@ export default function ParametresPage() {
     }
   }, [userRole, userLoading, router]);
 
+  useEffect(() => {
+    if (team) {
+      setName(team.name);
+      setSlug(team.slug);
+      setDescription(team.description || '');
+      setPrimaryColor(team.primary_color || '#020617');
+      setSecondaryColor(team.secondary_color || '#e0f2fe');
+      setLogoPreview(team.logo_url || null);
+      setTeamPhotoPreview(team.team_photo_url || null);
+      setLoading(false);
+    }
+  }, [team]);
+
   // Show loading or access denied while checking admin role
   if (userLoading) {
     return (
@@ -73,20 +86,6 @@ export default function ParametresPage() {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (team) {
-      setName(team.name);
-      setSlug(team.slug);
-      setDescription(team.description || '');
-      setPrimaryColor(team.primary_color || '#020617');
-      setSecondaryColor(team.secondary_color || '#e0f2fe');
-      setLogoPreview(team.logo_url);
-      setTeamPhotoPreview(team.team_photo_url);
-      setProfilePhotoPreview(user?.profile_photo_url || null);
-      setLoading(false);
-    }
-  }, [team, user]);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
