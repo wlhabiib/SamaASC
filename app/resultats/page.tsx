@@ -381,7 +381,7 @@ export default function ResultatsPage() {
               </div>
 
               {/* Winner Display (after vote ends) */}
-              {!votingOpen && motm && (
+              {match.vote_end_time && !votingOpen && motm && (
                 <div className="mt-3 rounded-2xl shadow-lg overflow-hidden relative" style={{
                   boxShadow: '0 4px 30px -4px rgba(14, 165, 233, 0.3)'
                 }}>
