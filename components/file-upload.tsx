@@ -18,7 +18,7 @@ export default function FileUpload({
   onChange,
   onTypeChange,
   accept = 'image/*,video/*',
-  maxSize = 2,
+  maxSize = 10,
   label = 'Image',
   teamId
 }: FileUploadProps) {
