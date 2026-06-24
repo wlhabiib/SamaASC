@@ -13,9 +13,7 @@ export default function SplashScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (!showSplash) return null;
-
-  return (
+  return showSplash ? (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#020617]">
       <div className="relative">
         {/* Blue frame */}
@@ -29,5 +27,5 @@ export default function SplashScreen() {
         </div>
       </div>
     </div>
-  );
+  ) : null;
 }

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Error({
@@ -12,9 +11,7 @@ export default function Error({
 }) {
   const router = useRouter();
 
-  useEffect(() => {
-    console.error('Application error:', error);
-  }, [error]);
+  console.error('Application error:', error);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
