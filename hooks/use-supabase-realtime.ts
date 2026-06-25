@@ -21,6 +21,9 @@ export function useSupabaseRealtime<T extends { [key: string]: any }>(
   const [error, setError] = useState<string | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
 
+  // Stable filter string for dependencies
+  const filterString = filter ? `${filter.column}:${String(filter.value)}` : 'none';
+
   useEffect(() => {
     let mounted = true;
 
@@ -31,15 +34,15 @@ export function useSupabaseRealtime<T extends { [key: string]: any }>(
 
         // Initial fetch
         let query = supabase.from(table).select('*');
-        
+
         if (filter) {
           query = query.eq(filter.column, filter.value);
         }
 
         const { data: initialFetch, error: fetchError } = await query;
-        
+
         if (fetchError) throw fetchError;
-        
+
         if (mounted) {
           setData(initialFetch || []);
           setLoading(false);
@@ -47,7 +50,7 @@ export function useSupabaseRealtime<T extends { [key: string]: any }>(
 
         // Setup realtime subscription
         const channelName = `${table}_realtime_${filter?.column}_${filter?.value || 'all'}`;
-        
+
         const channel = supabase
           .channel(channelName)
           .on(
@@ -110,7 +113,7 @@ export function useSupabaseRealtime<T extends { [key: string]: any }>(
         channelRef.current = null;
       }
     };
-  }, [table, filter?.column, filter?.value]);
+  }, [table, filterString]);
 
   return { data, loading, error, setData };
 }
