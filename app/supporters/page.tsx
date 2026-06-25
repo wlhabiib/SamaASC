@@ -148,7 +148,9 @@ export default function SupportersPage() {
         throw new Error(error.error || 'Failed to submit message');
       }
 
-      const data = await response.json();
+      const newSupporter = await response.json();
+
+      setSupporters((prev) => [newSupporter, ...prev.filter(item => item.id !== newSupporter.id)]);
 
       // Reset form
       setMessage('');

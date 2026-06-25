@@ -17,6 +17,50 @@ export default function GaleriePage() {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [filter, setFilter] = useState<string>('all');
 
+  const downloadMedia = async (url: string, type: string) => {
+    try {
+      let blob: Blob;
+      let extension = type === 'video' ? 'mp4' : 'jpg';
+
+      if (url.startsWith('data:')) {
+        const match = url.match(/data:(.*);base64,/);
+        if (match) {
+          const mimeType = match[1];
+          extension = mimeType.split('/')[1] || extension;
+        }
+        const data = url.split(',')[1];
+        const binary = atob(data);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          array[i] = binary.charCodeAt(i);
+        }
+        blob = new Blob([array], { type: url.substring(url.indexOf(':') + 1, url.indexOf(';')) });
+      } else {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Impossible de télécharger le média');
+        }
+        blob = await response.blob();
+        const fileExtMatch = url.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
+        if (fileExtMatch) {
+          extension = fileExtMatch[1];
+        }
+      }
+
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `galerie-${Date.now()}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error('Error downloading media:', error);
+      alert('Impossible de télécharger ce média');
+    }
+  };
+
   // Authentication check - must be before early return
   useEffect(() => {
     if (!contextLoading) {
@@ -167,14 +211,16 @@ export default function GaleriePage() {
           >
             <X size={20} />
           </button>
-          <a
-            href={selectedItem.url}
-            download
+          <button
+            type="button"
             className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              downloadMedia(selectedItem.url, selectedItem.type);
+            }}
           >
             <Download size={20} />
-          </a>
+          </button>
           <div className="max-w-sm w-full" onClick={e => e.stopPropagation()}>
             {selectedItem.type === 'video' ? (
               <video
