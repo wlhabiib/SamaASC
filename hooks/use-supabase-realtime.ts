@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
-export function useSupabaseRealtime<T>(
+export function useSupabaseRealtime<T extends { [key: string]: any }>(
   table: string,
   filter?: { column: string; value: any },
   initialData: T[] = []
@@ -51,14 +51,14 @@ export function useSupabaseRealtime<T>(
         const channel = supabase
           .channel(channelName)
           .on(
-            'postgres_changes',
+            'postgres_changes' as any,
             {
               event: '*',
               schema: 'public',
               table: table,
               filter: filter ? `${filter.column}=eq.${filter.value}` : undefined,
             },
-            (payload: RealtimePostgresChangesPayload<T>) => {
+            (payload: any) => {
               if (!mounted) return;
 
               console.log(`Realtime update on ${table}:`, payload);
