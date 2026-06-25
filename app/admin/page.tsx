@@ -172,8 +172,7 @@ export default function AdminPage() {
     }
   }, [team, tab]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { loadAll(); }, [team, tab]);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
   // Early returns after all hooks
   if (userLoading) {
