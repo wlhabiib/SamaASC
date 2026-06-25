@@ -172,7 +172,8 @@ export default function AdminPage() {
     }
   }, [team, tab]);
 
-  useEffect(() => { loadAll(); }, [team, tab, loadAll]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadAll(); }, [team, tab]);
 
   // Early returns after all hooks
   if (userLoading) {
@@ -594,6 +595,10 @@ export default function AdminPage() {
   // Load lineup when match selected
   useEffect(() => {
     if (!lineupMatchId) { setLineupStarters([]); setLineupSubs([]); return; }
+    if (!matches || matches.length === 0) return;
+    if (!lineups) return;
+    if (!players || players.length === 0) return;
+
     const match = matches.find(m => m.id === lineupMatchId);
     if (match) setLineupFormation(match.formation || '4-3-3');
     const existing = lineups.filter(l => l.match_id === lineupMatchId);
@@ -626,9 +631,9 @@ export default function AdminPage() {
     return (<AppShell><div className="space-y-4 pt-4"><div className="h-12 rounded-xl bg-gray-100 animate-pulse" /><div className="h-64 rounded-2xl bg-gray-100 animate-pulse" /></div></AppShell>);
   }
 
-  const upcomingMatches = matches.filter(m => m.status === 'upcoming');
-  const standingsCompetitions = Array.from(new Set(standings.map(s => s.competition_name)));
-  const filteredStandings = standingsComp ? standings.filter(s => s.competition_name === standingsComp) : standings;
+  const upcomingMatches = matches ? matches.filter(m => m.status === 'upcoming') : [];
+  const standingsCompetitions = standings ? Array.from(new Set(standings.map(s => s.competition_name))) : [];
+  const filteredStandings = standingsComp && standings ? standings.filter(s => s.competition_name === standingsComp) : standings || [];
 
   const toggleStarter = (pid: string) => {
     if (lineupStarters.includes(pid)) {
