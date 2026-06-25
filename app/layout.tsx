@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { TeamProvider } from '@/contexts/team-context';
@@ -15,12 +15,15 @@ export const metadata: Metadata = {
     icon: '/icon-192.png',
     apple: '/icon-512.png',
   },
-  themeColor: '#22D3EE',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Sama ASC',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#22D3EE',
 };
 
 export default function RootLayout({
