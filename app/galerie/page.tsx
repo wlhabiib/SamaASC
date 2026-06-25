@@ -44,6 +44,9 @@ export default function GaleriePage() {
     }
   }, [realtimeItems, realtimeLoading]);
 
+  const eventTypes = useMemo(() => ['all', ...Array.from(new Set((items || []).map(i => i.event_type)))], [items]);
+  const filtered = useMemo(() => filter === 'all' ? (items || []) : (items || []).filter(i => i.event_type === filter), [items, filter]);
+
   if (loading || contextLoading) {
     return (
       <AppShell>
@@ -55,9 +58,6 @@ export default function GaleriePage() {
       </AppShell>
     );
   }
-
-  const eventTypes = useMemo(() => ['all', ...Array.from(new Set((items || []).map(i => i.event_type)))], [items]);
-  const filtered = useMemo(() => filter === 'all' ? (items || []) : (items || []).filter(i => i.event_type === filter), [items, filter]);
 
   return (
     <AppShell>

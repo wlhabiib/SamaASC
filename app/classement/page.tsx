@@ -63,6 +63,9 @@ export default function ClassementPage() {
     }
   }, [standingsLoading, competitionsLoading]);
 
+  const filtered = useMemo(() => (standings || []).filter(s => s.competition_name === selectedCompetition), [standings, selectedCompetition]);
+  const ourTeam = useMemo(() => filtered.find(s => s.team_name === team?.name), [filtered, team?.name]);
+
   if (loading || contextLoading) {
     return (
       <AppShell>
@@ -72,9 +75,6 @@ export default function ClassementPage() {
       </AppShell>
     );
   }
-
-  const filtered = useMemo(() => (standings || []).filter(s => s.competition_name === selectedCompetition), [standings, selectedCompetition]);
-  const ourTeam = useMemo(() => filtered.find(s => s.team_name === team?.name), [filtered, team?.name, team]);
 
   return (
     <AppShell>
