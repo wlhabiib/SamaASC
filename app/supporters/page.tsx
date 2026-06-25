@@ -302,8 +302,11 @@ export default function SupportersPage() {
               <div className="absolute bottom-0 left-0 w-20 h-20 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
               <div className="relative z-10 flex items-start gap-3">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden ${!s.profile_photo_url ? `bg-gradient-to-br ${COLORS[idx % COLORS.length]}` : ''}`}>
-                  {s.profile_photo_url ? (
-                    <img src={s.profile_photo_url} alt={s.name} className="w-full h-full object-cover" />
+                  {s.profile_photo_url && s.profile_photo_url.length > 0 ? (
+                    <img src={s.profile_photo_url} alt={s.name} className="w-full h-full object-cover" onError={(e) => {
+                      console.error('Error loading profile photo:', s.profile_photo_url);
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }} />
                   ) : (
                     <span className="text-white text-xs font-bold">
                       {s.name.charAt(0).toUpperCase()}
@@ -314,9 +317,15 @@ export default function SupportersPage() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-sky-200">{timeAgo(s.created_at)}</span>
                   </div>
-                  {s.message_type === 'voice' && s.voice_url && (
-                    <audio src={s.voice_url} controls className="w-full mb-2 h-8" />
-                  )}
+                  {s.message_type === 'voice' ? (
+                    s.voice_url && s.voice_url.length > 0 ? (
+                      <audio src={s.voice_url} controls className="w-full mb-2 h-8" onError={(e) => {
+                        console.error('Error loading audio:', s.voice_url);
+                      }} />
+                    ) : (
+                      <div className="text-xs text-sky-200 mb-2">🎤 Message vocal (non disponible)</div>
+                    )
+                  ) : null}
                   {s.message_type === 'sticker' && s.sticker_url && (
                     <img src={s.sticker_url} alt="Sticker" className="w-24 h-24 object-cover rounded-lg mb-2" />
                   )}
