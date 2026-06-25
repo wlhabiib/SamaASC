@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Standing, Competition } from '@/lib/types';
 import AppShell from '@/components/app-shell';
@@ -69,8 +69,8 @@ export default function ClassementPage() {
     );
   }
 
-  const filtered = standings.filter(s => s.competition_name === selectedCompetition);
-  const ourTeam = filtered.find(s => s.team_name === team?.name);
+  const filtered = useMemo(() => standings.filter(s => s.competition_name === selectedCompetition), [standings, selectedCompetition]);
+  const ourTeam = useMemo(() => filtered.find(s => s.team_name === team?.name), [filtered, team?.name]);
 
   return (
     <AppShell>

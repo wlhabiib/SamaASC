@@ -2,7 +2,7 @@
 
 // UI refinements: gradients and color settings updated
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Announcement, Match, Player } from '@/lib/types';
@@ -136,7 +136,7 @@ export default function AccueilPage() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [team]);
 
-  const upcomingMatches = allMatches.filter(m => m.status === 'upcoming' || m.status === 'live');
+  const upcomingMatches = useMemo(() => allMatches.filter(m => m.status === 'upcoming' || m.status === 'live'), [allMatches]);
 
   // Show loading state only during initial authentication check
   if (contextLoading) {

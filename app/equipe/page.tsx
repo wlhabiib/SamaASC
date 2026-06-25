@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Player, Coach, PlayerStat, MatchLineup, Match, Competition, POSITION_LABELS } from '@/lib/types';
@@ -131,12 +131,12 @@ export default function EquipePage() {
     );
   }
 
-  const upcomingMatches = matches.filter(m => m.status === 'upcoming');
-  const selectedMatch = matches.find(m => m.id === selectedMatchId);
+  const upcomingMatches = useMemo(() => matches.filter(m => m.status === 'upcoming'), [matches]);
+  const selectedMatch = useMemo(() => matches.find(m => m.id === selectedMatchId), [matches, selectedMatchId]);
 
   // Get starting 11 from lineup for selected match
-  const matchLineup = lineups.filter(l => l.match_id === selectedMatchId && !l.is_substitute);
-  const matchSubstitutes = lineups.filter(l => l.match_id === selectedMatchId && l.is_substitute);
+  const matchLineup = useMemo(() => lineups.filter(l => l.match_id === selectedMatchId && !l.is_substitute), [lineups, selectedMatchId]);
+  const matchSubstitutes = useMemo(() => lineups.filter(l => l.match_id === selectedMatchId && l.is_substitute), [lineups, selectedMatchId]);
 
   // If no lineup set, fall back to players with is_starter=true
   const starters = matchLineup.length > 0

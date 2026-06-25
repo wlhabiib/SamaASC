@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { GalleryItem } from '@/lib/types';
@@ -63,8 +63,8 @@ export default function GaleriePage() {
     );
   }
 
-  const eventTypes = ['all', ...Array.from(new Set(items.map(i => i.event_type)))];
-  const filtered = filter === 'all' ? items : items.filter(i => i.event_type === filter);
+  const eventTypes = useMemo(() => ['all', ...Array.from(new Set(items.map(i => i.event_type)))], [items]);
+  const filtered = useMemo(() => filter === 'all' ? items : items.filter(i => i.event_type === filter), [items, filter]);
 
   return (
     <AppShell>
