@@ -17,9 +17,18 @@ export default function SupportersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordedAudioBlobRef = useRef<Blob | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (recordedAudioUrl) {
+        URL.revokeObjectURL(recordedAudioUrl);
+      }
+    };
+  }, [recordedAudioUrl]);
 
   const STICKERS = ['⚽', '🔥', '💪', '🎉', '👏', '❤️', '⭐', '🏆', '🚀', '💯'];
 
@@ -67,9 +76,11 @@ export default function SupportersPage() {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const audioUrl = URL.createObjectURL(audioBlob);
-        setRecordedAudio(audioUrl);
+        recordedAudioBlobRef.current = audioBlob;
+        setRecordedAudioUrl(audioUrl);
       };
 
       mediaRecorderRef.current.start();
@@ -91,21 +102,27 @@ export default function SupportersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !team) return;
-    if (!selectedSticker && !message.trim() && !recordedAudio) return;
+    if (!selectedSticker && !message.trim() && !recordedAudioUrl) return;
     setSubmitting(true);
 
     let voiceUrl = null;
     let message_type = 'text';
 
     // Handle voice message
-    if (recordedAudio) {
+    if (recordedAudioUrl && recordedAudioBlobRef.current) {
       message_type = 'voice';
-      // Convert audio blob to base64
-      const response = await fetch(recordedAudio);
-      const blob = await response.blob();
+      const blob = recordedAudioBlobRef.current;
       const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onloadend = () => resolve(reader.result as string);
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => {
+          const result = reader.result;
+          if (typeof result === 'string') {
+            resolve(result);
+          } else {
+            reject(new Error('Unable to encode audio'));
+          }
+        };
+        reader.onerror = () => reject(new Error('Failed to read audio blob'));
         reader.readAsDataURL(blob);
       });
       voiceUrl = await base64Promise;
@@ -136,7 +153,8 @@ export default function SupportersPage() {
       // Reset form
       setMessage('');
       setSelectedSticker(null);
-      setRecordedAudio(null);
+      setRecordedAudioUrl(null);
+      recordedAudioBlobRef.current = null;
     } catch (error) {
       console.error('Error submitting message:', error);
       alert('Erreur lors de l\'envoi du message');
@@ -222,12 +240,15 @@ export default function SupportersPage() {
             </div>
 
             {/* Voice Recording Preview */}
-            {recordedAudio && (
+            {recordedAudioUrl && (
               <div className="mb-3 p-3 bg-white/20 rounded-xl flex items-center gap-2">
-                <audio src={recordedAudio} controls className="flex-1 h-8" />
+                <audio src={recordedAudioUrl} controls className="flex-1 h-8" />
                 <button
                   type="button"
-                  onClick={() => setRecordedAudio(null)}
+                  onClick={() => {
+                    setRecordedAudioUrl(null);
+                    recordedAudioBlobRef.current = null;
+                  }}
                   className="p-2 bg-red-500 rounded-lg text-white hover:bg-red-600"
                 >
                   <X size={16} />
@@ -245,13 +266,13 @@ export default function SupportersPage() {
                   placeholder="Écrivez votre message... (emojis autorisés)"
                   className="w-full px-4 py-3 rounded-xl bg-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
                   rows={1}
-                  disabled={!!recordedAudio}
+                  disabled={!!recordedAudioUrl}
                   style={{ minHeight: '48px' }}
                 />
               </div>
 
               {/* Voice/Send Button */}
-              {!message.trim() && !recordedAudio ? (
+              {!message.trim() && !recordedAudioUrl ? (
                 isRecording ? (
                   <button
                     type="button"
@@ -317,14 +338,12 @@ export default function SupportersPage() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-sky-200">{timeAgo(s.created_at)}</span>
                   </div>
-                  {s.message_type === 'voice' ? (
-                    s.voice_url && s.voice_url.length > 0 ? (
-                      <audio src={s.voice_url} controls className="w-full mb-2 h-8" onError={(e) => {
-                        console.error('Error loading audio:', s.voice_url);
-                      }} />
-                    ) : (
-                      <div className="text-xs text-sky-200 mb-2">🎤 Message vocal (non disponible)</div>
-                    )
+                  {s.voice_url && s.voice_url.length > 0 ? (
+                    <audio src={s.voice_url} controls className="w-full mb-2 h-8" onError={(e) => {
+                      console.error('Error loading audio:', s.voice_url);
+                    }} />
+                  ) : s.message_type === 'voice' ? (
+                    <div className="text-xs text-sky-200 mb-2">🎤 Message vocal (non disponible)</div>
                   ) : null}
                   {s.message_type === 'sticker' && s.sticker_url && (
                     <img src={s.sticker_url} alt="Sticker" className="w-24 h-24 object-cover rounded-lg mb-2" />
