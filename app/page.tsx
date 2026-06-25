@@ -109,7 +109,7 @@ export default function AccueilPage() {
     }
   }, [announcementsLoading, matchesLoading, playersLoading]);
 
-  const upcomingMatches = useMemo(() => allMatches.filter(m => m.status === 'upcoming' || m.status === 'live'), [allMatches]);
+  const upcomingMatches = useMemo(() => (allMatches || []).filter(m => m.status === 'upcoming' || m.status === 'live'), [allMatches]);
 
   // Show loading state only during initial authentication check
   if (contextLoading) {

@@ -148,8 +148,8 @@ export default function ResultatsPage() {
       .filter(item => item.player);
   };
 
-  const filteredMatches = useMemo(() => 
-    matches.filter(m => m.status === 'completed' && (!selectedCompetition || m.competition === selectedCompetition)),
+  const filteredMatches = useMemo(() =>
+    (matches || []).filter(m => m.status === 'completed' && (!selectedCompetition || m.competition === selectedCompetition)),
     [matches, selectedCompetition]
   );
 

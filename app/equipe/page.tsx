@@ -171,12 +171,12 @@ export default function EquipePage() {
     );
   }
 
-  const upcomingMatches = useMemo(() => matches.filter(m => m.status === 'upcoming'), [matches]);
-  const selectedMatch = useMemo(() => matches.find(m => m.id === selectedMatchId), [matches, selectedMatchId]);
+  const upcomingMatches = useMemo(() => (matches || []).filter(m => m.status === 'upcoming'), [matches]);
+  const selectedMatch = useMemo(() => (matches || []).find(m => m.id === selectedMatchId), [matches, selectedMatchId]);
 
   // Get starting 11 from lineup for selected match
-  const matchLineup = useMemo(() => lineups.filter(l => l.match_id === selectedMatchId && !l.is_substitute), [lineups, selectedMatchId]);
-  const matchSubstitutes = useMemo(() => lineups.filter(l => l.match_id === selectedMatchId && l.is_substitute), [lineups, selectedMatchId]);
+  const matchLineup = useMemo(() => (lineups || []).filter(l => l.match_id === selectedMatchId && !l.is_substitute), [lineups, selectedMatchId]);
+  const matchSubstitutes = useMemo(() => (lineups || []).filter(l => l.match_id === selectedMatchId && l.is_substitute), [lineups, selectedMatchId]);
 
   // If no lineup set, fall back to players with is_starter=true
   const starters = matchLineup.length > 0

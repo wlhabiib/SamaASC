@@ -56,8 +56,8 @@ export default function GaleriePage() {
     );
   }
 
-  const eventTypes = useMemo(() => ['all', ...Array.from(new Set(items.map(i => i.event_type)))], [items]);
-  const filtered = useMemo(() => filter === 'all' ? items : items.filter(i => i.event_type === filter), [items, filter]);
+  const eventTypes = useMemo(() => ['all', ...Array.from(new Set((items || []).map(i => i.event_type)))], [items]);
+  const filtered = useMemo(() => filter === 'all' ? (items || []) : (items || []).filter(i => i.event_type === filter), [items, filter]);
 
   return (
     <AppShell>
