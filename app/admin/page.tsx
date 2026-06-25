@@ -8,7 +8,7 @@ import AppShell from '@/components/app-shell';
 import FileUpload from '@/components/file-upload';
 import { useTeam } from '@/contexts/team-context';
 import { useAuthUser } from '@/lib/auth-context';
-import { Users, Calendar, Megaphone, Trophy, Image as ImageIcon, Settings, Plus, Trash2, Edit2, Save, X, ChevronDown, Target, Shirt, Check, Play, ShieldAlert, Upload } from 'lucide-react';
+import { Users, Calendar, Megaphone, Trophy, Image as ImageIcon, Settings, Plus, Trash2, Edit2, Save, X, ChevronDown, Target, Shirt, Check, Play, ShieldAlert, Upload, Eye, EyeOff } from 'lucide-react';
 
 type Tab = 'players' | 'matches' | 'lineup' | 'announcements' | 'standings' | 'gallery' | 'coach' | 'stats' | 'competitions' | 'users' | 'settings';
 
@@ -32,6 +32,23 @@ const Input = ({ label, field, type = 'text', placeholder = '', value, onChange 
     <label className="text-xs font-medium text-gray-500 mb-1 block">{label}</label>
     <input type={type} value={value} onChange={e => onChange(e.target.value)}
       placeholder={placeholder} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm input-shadow focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500" />
+  </div>
+);
+
+const PasswordInput = ({ label, field, placeholder = '', value, onChange, showPassword, onTogglePassword }: { label: string; field: string; placeholder?: string; value: string; onChange: (value: string) => void; showPassword: boolean; onTogglePassword: () => void }) => (
+  <div className="relative z-10">
+    <label className="text-xs font-medium text-gray-500 mb-1 block">{label}</label>
+    <div className="relative">
+      <input type={showPassword ? 'text' : 'password'} value={value} onChange={e => onChange(e.target.value)}
+        placeholder={placeholder} className="w-full rounded-lg border border-gray-200 px-3 py-2 pr-10 text-sm input-shadow focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500" />
+      <button
+        type="button"
+        onClick={onTogglePassword}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
   </div>
 );
 
@@ -77,6 +94,7 @@ export default function AdminPage() {
   const [lineupPositions, setLineupPositions] = useState<Record<number, string>>({});
   const [standingsComp, setStandingsComp] = useState<string>('');
   const [statsComp, setStatsComp] = useState<string>('');
+  const [showPassword, setShowPassword] = useState(false);
 
 
   // Formation positions mapping
@@ -1418,7 +1436,7 @@ export default function AdminPage() {
                   <button onClick={() => { setShowForm(false); setEditing(null); setForm({}); }} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
                 </div>
                 <Input label="Email" field="email" type="email" placeholder={`Ex: membre@${team?.slug || 'team.com'}`} value={form.email || ''} onChange={(value) => setForm(prev => ({ ...prev, email: value }))} />
-                <Input label="Mot de passe" field="password" type="password" placeholder="Mot de passe" value={form.password || ''} onChange={(value) => setForm(prev => ({ ...prev, password: value }))} />
+                <PasswordInput label="Mot de passe" field="password" placeholder="Mot de passe" value={form.password || ''} onChange={(value) => setForm(prev => ({ ...prev, password: value }))} showPassword={showPassword} onTogglePassword={() => setShowPassword(!showPassword)} />
                 <p className="text-xs text-gray-500">L'email doit appartenir au domaine de l'équipe: {team?.slug || team?.slug}</p>
                 <button onClick={handleUserSubmit} className="w-full py-2.5 rounded-xl text-white text-sm font-semibold btn-shadow flex items-center justify-center gap-2" style={{ backgroundColor: team?.secondary_color || '#22c55e' }}>
                   <Save size={16} /> {editing ? 'Mettre à jour' : 'Ajouter'}
