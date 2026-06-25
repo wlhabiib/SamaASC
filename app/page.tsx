@@ -5,7 +5,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Announcement, Match, Player } from '@/lib/types';
+import { Announcement, Match, Player, GalleryItem, User } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
 import { useSupabaseRealtime } from '@/hooks/use-supabase-realtime';
@@ -77,6 +77,16 @@ export default function AccueilPage() {
     team ? { column: 'team_id', value: team.id } : undefined
   );
 
+  const { data: realtimeGallery, loading: galleryLoading } = useSupabaseRealtime<GalleryItem>(
+    'gallery',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  const { data: realtimeUsers, loading: usersLoading } = useSupabaseRealtime<User>(
+    'team_members',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
   // Update state when realtime data changes
   useEffect(() => {
     if (!announcementsLoading && realtimeAnnouncements) {
@@ -102,6 +112,18 @@ export default function AccueilPage() {
       setPlayers(realtimePlayers);
     }
   }, [realtimePlayers, playersLoading]);
+
+  useEffect(() => {
+    if (!galleryLoading && realtimeGallery) {
+      setGalleryCount(realtimeGallery.length);
+    }
+  }, [realtimeGallery, galleryLoading]);
+
+  useEffect(() => {
+    if (!usersLoading && realtimeUsers) {
+      setUserCount(realtimeUsers.length);
+    }
+  }, [realtimeUsers, usersLoading]);
 
   useEffect(() => {
     if (!announcementsLoading && !matchesLoading && !playersLoading) {
