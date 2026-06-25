@@ -58,13 +58,21 @@ export default function Header() {
             title={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email || 'Utilisateur'}
           >
             {user?.profile_photo_url ? (
-              <Image
-                src={user.profile_photo_url}
-                alt="Profile"
-                width={32}
-                height={32}
-                className="w-full h-full object-cover"
-              />
+              user.profile_photo_url.startsWith('data:') ? (
+                <img
+                  src={user.profile_photo_url}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={user.profile_photo_url}
+                  alt="Profile"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                />
+              )
             ) : (
               <div className="w-full h-full rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-400 to-sky-600">
                 <User size={16} className="text-white" />

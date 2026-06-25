@@ -9,7 +9,7 @@ import { Palette, Upload, Save, X, Check, ShieldAlert } from 'lucide-react';
 
 export default function ParametresPage() {
   const router = useRouter();
-  const { team, user, loading: contextLoading } = useTeam();
+  const { team, user, loading: contextLoading, refreshTeam } = useTeam();
   const { userRole, loading: userLoading } = useAuthUser();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,9 +53,10 @@ export default function ParametresPage() {
       setSecondaryColor(team.secondary_color || '#e0f2fe');
       setLogoPreview(team.logo_url || null);
       setTeamPhotoPreview(team.team_photo_url || null);
+      setProfilePhotoPreview(user?.profile_photo_url || null);
       setLoading(false);
     }
-  }, [team]);
+  }, [team, user]);
 
   // Show loading or access denied while checking admin role
   if (userLoading) {
@@ -191,7 +192,7 @@ export default function ParametresPage() {
 
       // Update profile photo via API
       if (profilePhotoUrl !== user?.profile_photo_url && user) {
-        await fetch('/api/admin/profile-photo', {
+        const photoResponse = await fetch('/api/admin/profile-photo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -200,6 +201,11 @@ export default function ParametresPage() {
             profile_photo_url: profilePhotoUrl
           }),
         });
+
+        if (!photoResponse.ok) {
+          const photoError = await photoResponse.json();
+          throw new Error(photoError.error || 'Failed to update profile photo');
+        }
       }
 
       // Update team via API route
@@ -225,9 +231,15 @@ export default function ParametresPage() {
         throw new Error(error.error || 'Failed to update team');
       }
 
+      if (refreshTeam) {
+        await refreshTeam(true);
+      }
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-      
+      setProfilePhotoFile(null);
+      setProfilePhotoPreview(profilePhotoUrl);
+
       // Update team context with new data
       if (team) {
         const updatedTeam = {

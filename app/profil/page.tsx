@@ -8,7 +8,7 @@ import { User as UserIcon, Upload, Save, Check } from 'lucide-react';
 
 export default function ProfilPage() {
   const router = useRouter();
-  const { team, user, loading: contextLoading } = useTeam();
+  const { team, user, loading: contextLoading, refreshTeam } = useTeam();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -34,7 +34,7 @@ export default function ProfilPage() {
       setName(`${user.first_name || ''} ${user.last_name || ''}`.trim());
       setUsername(user.email || '');
       setEmail(user.email || '');
-      setProfilePhotoPreview(null);
+      setProfilePhotoPreview(user.profile_photo_url || null);
       setLoading(false);
     }
   }, [user]);
@@ -110,12 +110,16 @@ export default function ProfilPage() {
         throw new Error(responseData.error || `HTTP ${response.status}: Failed to update profile`);
       }
 
+      if (refreshTeam) {
+        await refreshTeam(true);
+      }
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Reset file input
+      // Keep the saved profile photo visible while the context updates
       setProfilePhotoFile(null);
-      setProfilePhotoPreview(null);
+      setProfilePhotoPreview(profilePhotoUrl);
     } catch (error) {
       console.error('Error saving profile:', error);
       alert('Erreur lors de la sauvegarde: ' + (error as Error).message);
@@ -207,8 +211,12 @@ export default function ProfilPage() {
             </h2>
             <div className="flex items-center gap-4">
               <div className="w-32 h-32 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden border-2 border-dashed border-white/30">
-                {profilePhotoPreview ? (
-                  <img src={profilePhotoPreview} alt="Profile" className="w-full h-full object-cover" />
+                {profilePhotoPreview || user?.profile_photo_url ? (
+                  <img
+                    src={profilePhotoPreview || user?.profile_photo_url || ''}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <UserIcon size={48} className="text-white/50" />
                 )}
