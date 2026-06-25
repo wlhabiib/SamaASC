@@ -45,7 +45,11 @@ export default function SupportersPage() {
 
   useEffect(() => {
     if (!realtimeLoading) {
-      setSupporters(realtimeSupporters);
+      // Sort by created_at descending (most recent first)
+      const sortedSupporters = [...realtimeSupporters].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setSupporters(sortedSupporters);
       setLoading(false);
     }
   }, [realtimeSupporters, realtimeLoading]);
