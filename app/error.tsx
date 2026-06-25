@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Error({
   error,
@@ -11,7 +12,16 @@ export default function Error({
 }) {
   const router = useRouter();
 
-  console.error('Application error:', error);
+  useEffect(() => {
+    // Log détaillé pour identifier le composant fautif
+    console.error('=== APPLICATION ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error digest:', error.digest);
+    console.error('Current URL:', window.location.href);
+    console.error('User Agent:', navigator.userAgent);
+    console.error('========================');
+  }, [error]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
@@ -31,14 +41,25 @@ export default function Error({
             />
           </svg>
         </div>
-        
+
         <h1 className="text-2xl font-bold text-white">
           Une erreur est survenue
         </h1>
-        
+
         <p className="text-gray-400">
           Cette page n'a pas pu charger. Veuillez réessayer.
         </p>
+
+        {/* Afficher les détails de l'erreur en développement */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-slate-800 rounded-lg p-4 text-left">
+            <p className="text-xs text-red-400 font-mono mb-2">{error.message}</p>
+            <details className="text-xs text-gray-500">
+              <summary className="cursor-pointer hover:text-gray-400">Stack trace</summary>
+              <pre className="mt-2 whitespace-pre-wrap">{error.stack}</pre>
+            </details>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3">
           <button
@@ -47,7 +68,7 @@ export default function Error({
           >
             Réessayer
           </button>
-          
+
           <button
             onClick={() => router.push('/')}
             className="w-full py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium transition-colors"
