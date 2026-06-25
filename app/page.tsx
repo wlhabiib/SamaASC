@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Announcement, Match, Player } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetchWithCache, clearCache } from '@/utils/cache';
+import { useSupabaseRealtime } from '@/hooks/use-supabase-realtime';
 import { Calendar, MapPin, Clock, Trophy, Users, Image, ChevronRight, Home } from 'lucide-react';
 
 const TYPE_CONFIG: Record<string, { icon: typeof Calendar; color: string; bg: string; label: string }> = {
@@ -61,80 +61,53 @@ export default function AccueilPage() {
     }
   }, [team, user, contextLoading, router]);
 
-  // Data loading - non-blocking pattern
+  // Realtime data loading
+  const { data: realtimeAnnouncements, loading: announcementsLoading } = useSupabaseRealtime<Announcement>(
+    'announcements',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  const { data: realtimeMatches, loading: matchesLoading } = useSupabaseRealtime<Match>(
+    'matches',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  const { data: realtimePlayers, loading: playersLoading } = useSupabaseRealtime<Player>(
+    'players',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  // Update state when realtime data changes
   useEffect(() => {
-    async function load() {
-      if (!team) return;
-
-      try {
-        const [ann, m, p, g, u] = await Promise.all([
-          fetchWithCache<Announcement[]>(`/api/data/announcements?team_id=${team.id}`, `announcements_${team.id}`),
-          fetchWithCache<Match[]>(`/api/data/matches?team_id=${team.id}`, `matches_${team.id}`),
-          fetchWithCache<Player[]>(`/api/data/players?team_id=${team.id}`, `players_${team.id}`),
-          fetchWithCache<any[]>(`/api/data/gallery?team_id=${team.id}`, `gallery_${team.id}`),
-          fetchWithCache<any[]>(`/api/data/users?team_id=${team.id}`, `users_${team.id}`),
-        ]);
-
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        const validAnnouncements = ann.filter((announcement: Announcement) => {
-          if (!announcement.event_date) return true;
-          const eventDate = new Date(announcement.event_date + 'T00:00:00');
-          return eventDate.getTime() >= now.getTime();
-        });
-
-        setAnnouncements(validAnnouncements);
-        setAllMatches(m);
-        setPlayers(p);
-        setGalleryCount((g as any[]).length || 0);
-        setUserCount((u as any[]).length || 0);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
-      }
+    if (!announcementsLoading && realtimeAnnouncements) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const validAnnouncements = realtimeAnnouncements.filter((announcement: Announcement) => {
+        if (!announcement.event_date) return true;
+        const eventDate = new Date(announcement.event_date + 'T00:00:00');
+        return eventDate.getTime() >= now.getTime();
+      });
+      setAnnouncements(validAnnouncements);
     }
+  }, [realtimeAnnouncements, announcementsLoading]);
 
-    if (team && !contextLoading) {
-      load();
-    }
-  }, [team, contextLoading]);
-
-  // Reload all data when page becomes visible (after admin adds items)
   useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && team) {
-        try {
-          const [ann, m, p, g, u] = await Promise.all([
-            fetchWithCache<Announcement[]>(`/api/data/announcements?team_id=${team.id}`, `announcements_${team.id}`, true),
-            fetchWithCache<Match[]>(`/api/data/matches?team_id=${team.id}`, `matches_${team.id}`, true),
-            fetchWithCache<Player[]>(`/api/data/players?team_id=${team.id}`, `players_${team.id}`, true),
-            fetchWithCache<any[]>(`/api/data/gallery?team_id=${team.id}`, `gallery_${team.id}`, true),
-            fetchWithCache<any[]>(`/api/data/users?team_id=${team.id}`, `users_${team.id}`, true),
-          ]);
+    if (!matchesLoading && realtimeMatches) {
+      setAllMatches(realtimeMatches);
+    }
+  }, [realtimeMatches, matchesLoading]);
 
-          const now = new Date();
-          now.setHours(0, 0, 0, 0);
-          const validAnnouncements = ann.filter((announcement: Announcement) => {
-            if (!announcement.event_date) return true;
-            const eventDate = new Date(announcement.event_date + 'T00:00:00');
-            return eventDate.getTime() >= now.getTime();
-          });
+  useEffect(() => {
+    if (!playersLoading && realtimePlayers) {
+      setPlayers(realtimePlayers);
+    }
+  }, [realtimePlayers, playersLoading]);
 
-          setAnnouncements(validAnnouncements);
-          setAllMatches(m);
-          setPlayers(p);
-          setGalleryCount((g as any[]).length || 0);
-          setUserCount((u as any[]).length || 0);
-        } catch (error) {
-          console.error('Error reloading data:', error);
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [team]);
+  useEffect(() => {
+    if (!announcementsLoading && !matchesLoading && !playersLoading) {
+      setLoading(false);
+    }
+  }, [announcementsLoading, matchesLoading, playersLoading]);
 
   const upcomingMatches = useMemo(() => allMatches.filter(m => m.status === 'upcoming' || m.status === 'live'), [allMatches]);
 

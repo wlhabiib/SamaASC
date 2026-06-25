@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Standing, Competition } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetchWithCache } from '@/utils/cache';
+import { useSupabaseRealtime } from '@/hooks/use-supabase-realtime';
 import { Trophy } from 'lucide-react';
 
 export default function ClassementPage() {
@@ -30,34 +30,38 @@ export default function ClassementPage() {
     }
   }, [team, user, contextLoading, router]);
 
-  // Data loading
+  // Realtime data loading
+  const { data: realtimeStandings, loading: standingsLoading } = useSupabaseRealtime<Standing>(
+    'standings',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  const { data: realtimeCompetitions, loading: competitionsLoading } = useSupabaseRealtime<Competition>(
+    'competitions',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  // Update state when realtime data changes
   useEffect(() => {
-    async function load() {
-      if (!team) return;
-
-      try {
-        const [s, c] = await Promise.all([
-          fetchWithCache<Standing[]>(`/api/data/standings?team_id=${team.id}`, `standings_${team.id}`),
-          fetchWithCache<Competition[]>(`/api/data/competitions?team_id=${team.id}`, `competitions_${team.id}`),
-        ]);
-
-        setStandings(s);
-        setCompetitions(c || []);
-
-        if (s && s.length > 0) {
-          setSelectedCompetition(s[0].competition_name);
-        }
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
+    if (!standingsLoading && realtimeStandings) {
+      setStandings(realtimeStandings);
+      if (realtimeStandings.length > 0 && !selectedCompetition) {
+        setSelectedCompetition(realtimeStandings[0].competition_name);
       }
     }
+  }, [realtimeStandings, standingsLoading, selectedCompetition]);
 
-    if (team && !contextLoading) {
-      load();
+  useEffect(() => {
+    if (!competitionsLoading && realtimeCompetitions) {
+      setCompetitions(realtimeCompetitions || []);
     }
-  }, [team, contextLoading]);
+  }, [realtimeCompetitions, competitionsLoading]);
+
+  useEffect(() => {
+    if (!standingsLoading && !competitionsLoading) {
+      setLoading(false);
+    }
+  }, [standingsLoading, competitionsLoading]);
 
   if (loading || contextLoading) {
     return (

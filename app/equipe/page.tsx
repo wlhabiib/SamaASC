@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Player, Coach, PlayerStat, MatchLineup, Match, Competition, POSITION_LABELS } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetchWithCache } from '@/utils/cache';
+import { useSupabaseRealtime } from '@/hooks/use-supabase-realtime';
 import { Shirt, User, Target, Footprints, Trophy, Medal, ChevronDown, Users } from 'lucide-react';
 
 const FORMATIONS: Record<string, { slot: number; x: number; y: number; label: string }[]> = {
@@ -80,45 +80,85 @@ export default function EquipePage() {
     }
   }, [team, user, contextLoading, router]);
 
-  // Data loading
+  // Realtime data loading
+  const { data: realtimePlayers, loading: playersLoading } = useSupabaseRealtime<Player>(
+    'players',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  const { data: realtimeCoach, loading: coachLoading } = useSupabaseRealtime<Coach>(
+    'coach',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  const { data: realtimeStats, loading: statsLoading } = useSupabaseRealtime<PlayerStat>(
+    'player_stats',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  const { data: realtimeMatches, loading: matchesLoading } = useSupabaseRealtime<Match>(
+    'matches',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  const { data: realtimeLineups, loading: lineupsLoading } = useSupabaseRealtime<MatchLineup>(
+    'match_lineup',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  const { data: realtimeCompetitions, loading: competitionsLoading } = useSupabaseRealtime<Competition>(
+    'competitions',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
+  // Update state when realtime data changes
   useEffect(() => {
-    async function load() {
-      if (!team) return;
+    if (!playersLoading && realtimePlayers) {
+      setPlayers(realtimePlayers);
+    }
+  }, [realtimePlayers, playersLoading]);
 
-      try {
-        const [p, c, s, m, l, comp] = await Promise.all([
-          fetchWithCache<Player[]>(`/api/data/players?team_id=${team.id}`, `players_${team.id}`),
-          fetchWithCache<Coach>(`/api/data/coach?team_id=${team.id}`, `coach_${team.id}`),
-          fetchWithCache<PlayerStat[]>(`/api/data/player-stats?team_id=${team.id}`, `stats_${team.id}`),
-          fetchWithCache<Match[]>(`/api/data/matches?team_id=${team.id}`, `matches_${team.id}`),
-          fetchWithCache<MatchLineup[]>(`/api/data/match-lineup?team_id=${team.id}`, `lineups_${team.id}`),
-          fetchWithCache<Competition[]>(`/api/data/competitions?team_id=${team.id}`, `competitions_${team.id}`),
-        ]);
+  useEffect(() => {
+    if (!coachLoading && realtimeCoach && realtimeCoach.length > 0) {
+      setCoach(realtimeCoach[0]);
+    }
+  }, [realtimeCoach, coachLoading]);
 
-        setPlayers(p);
-        if (c) setCoach(c);
-        setStats(s);
-        setMatches(m);
-        setLineups(l);
-        setCompetitions(comp || []);
+  useEffect(() => {
+    if (!statsLoading && realtimeStats) {
+      setStats(realtimeStats);
+    }
+  }, [realtimeStats, statsLoading]);
 
-        // Auto-select next upcoming match
-        const upcoming = m.find(m => m.status === 'upcoming');
-        if (upcoming) {
-          setSelectedMatchId(upcoming.id);
-          setSelectedFormation(upcoming.formation || '4-3-3');
-        }
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
+  useEffect(() => {
+    if (!matchesLoading && realtimeMatches) {
+      setMatches(realtimeMatches);
+      // Auto-select next upcoming match
+      const upcoming = realtimeMatches.find(m => m.status === 'upcoming');
+      if (upcoming && !selectedMatchId) {
+        setSelectedMatchId(upcoming.id);
+        setSelectedFormation(upcoming.formation || '4-3-3');
       }
     }
+  }, [realtimeMatches, matchesLoading, selectedMatchId]);
 
-    if (team && !contextLoading) {
-      load();
+  useEffect(() => {
+    if (!lineupsLoading && realtimeLineups) {
+      setLineups(realtimeLineups);
     }
-  }, [team, contextLoading]);
+  }, [realtimeLineups, lineupsLoading]);
+
+  useEffect(() => {
+    if (!competitionsLoading && realtimeCompetitions) {
+      setCompetitions(realtimeCompetitions || []);
+    }
+  }, [realtimeCompetitions, competitionsLoading]);
+
+  useEffect(() => {
+    if (!playersLoading && !coachLoading && !statsLoading && !matchesLoading && !lineupsLoading && !competitionsLoading) {
+      setLoading(false);
+    }
+  }, [playersLoading, coachLoading, statsLoading, matchesLoading, lineupsLoading, competitionsLoading]);
 
   if (loading || contextLoading) {
     return (

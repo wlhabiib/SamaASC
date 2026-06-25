@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Supporter } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetchWithCache, setCachedData } from '@/utils/cache';
+import { useSupabaseRealtime } from '@/hooks/use-supabase-realtime';
 import { Heart, Send, Flame, MessageCircle, Mic, ImagePlus, X, Play, Smile, Paperclip } from 'lucide-react';
 
 export default function SupportersPage() {
@@ -37,25 +37,18 @@ export default function SupportersPage() {
     }
   }, [team, user, contextLoading, router]);
 
-  // Data loading
+  // Realtime data loading
+  const { data: realtimeSupporters, loading: realtimeLoading } = useSupabaseRealtime<Supporter>(
+    'supporters',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
   useEffect(() => {
-    async function load() {
-      if (!team) return;
-
-      try {
-        const data = await fetchWithCache<Supporter[]>(`/api/data/supporters?team_id=${team.id}`, `supporters_${team.id}`);
-        setSupporters(data || []);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
-      }
+    if (!realtimeLoading) {
+      setSupporters(realtimeSupporters);
+      setLoading(false);
     }
-
-    if (team && !contextLoading) {
-      load();
-    }
-  }, [team, contextLoading]);
+  }, [realtimeSupporters, realtimeLoading]);
 
   const startRecording = async () => {
     try {
@@ -135,12 +128,6 @@ export default function SupportersPage() {
       }
 
       const data = await response.json();
-
-      // Optimistic update
-      setSupporters([data, ...supporters]);
-
-      // Update cache
-      setCachedData(`supporters_${team.id}`, [data, ...supporters]);
 
       // Reset form
       setMessage('');

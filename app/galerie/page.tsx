@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { GalleryItem } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
-import { fetchWithCache } from '@/utils/cache';
+import { useSupabaseRealtime } from '@/hooks/use-supabase-realtime';
 import { Image as ImageIcon, Play, X, ZoomIn, Download } from 'lucide-react';
 
 export default function GaleriePage() {
@@ -31,25 +31,18 @@ export default function GaleriePage() {
     }
   }, [team, user, contextLoading, router]);
 
-  // Data loading
+  // Realtime data loading
+  const { data: realtimeItems, loading: realtimeLoading } = useSupabaseRealtime<GalleryItem>(
+    'gallery',
+    team ? { column: 'team_id', value: team.id } : undefined
+  );
+
   useEffect(() => {
-    async function load() {
-      if (!team) return;
-
-      try {
-        const data = await fetchWithCache<GalleryItem[]>(`/api/data/gallery?team_id=${team.id}`, `gallery_${team.id}`);
-        setItems(data);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
-      }
+    if (!realtimeLoading && realtimeItems) {
+      setItems(realtimeItems);
+      setLoading(false);
     }
-
-    if (team && !contextLoading) {
-      load();
-    }
-  }, [team, contextLoading]);
+  }, [realtimeItems, realtimeLoading]);
 
   if (loading || contextLoading) {
     return (
