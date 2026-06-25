@@ -73,7 +73,7 @@ export default function ClassementPage() {
     );
   }
 
-  const filtered = useMemo(() => standings.filter(s => s.competition_name === selectedCompetition), [standings, selectedCompetition]);
+  const filtered = useMemo(() => (standings || []).filter(s => s.competition_name === selectedCompetition), [standings, selectedCompetition]);
   const ourTeam = useMemo(() => filtered.find(s => s.team_name === team?.name), [filtered, team?.name, team]);
 
   return (

@@ -180,15 +180,15 @@ export default function EquipePage() {
 
   // If no lineup set, fall back to players with is_starter=true
   const starters = matchLineup.length > 0
-    ? matchLineup.sort((a, b) => a.position_slot - b.position_slot).map(l => players.find(p => p.id === l.player_id)).filter(Boolean) as Player[]
-    : players.filter(p => p.is_starter);
+    ? matchLineup.sort((a, b) => a.position_slot - b.position_slot).map(l => (players || []).find(p => p.id === l.player_id)).filter(Boolean) as Player[]
+    : (players || []).filter(p => p.is_starter);
   const substitutes = matchSubstitutes.length > 0
-    ? matchSubstitutes.map(l => players.find(p => p.id === l.player_id)).filter(Boolean) as Player[]
-    : players.filter(p => !starters.includes(p));
+    ? matchSubstitutes.map(l => (players || []).find(p => p.id === l.player_id)).filter(Boolean) as Player[]
+    : (players || []).filter(p => !starters.includes(p));
 
   const formationPositions = FORMATIONS[selectedFormation] || FORMATIONS['4-3-3'];
-  const competitionNames = competitions.map(c => c.name);
-  const filteredStats = statsComp === 'all' ? stats : stats.filter(s => (s as any).season === statsComp);
+  const competitionNames = (competitions || []).map(c => c.name);
+  const filteredStats = statsComp === 'all' ? (stats || []) : (stats || []).filter(s => (s as any).season === statsComp);
 
   // Aggregate stats per player
   const aggregated: { player: Player; goals: number; assists: number; matches: number }[] = [];
