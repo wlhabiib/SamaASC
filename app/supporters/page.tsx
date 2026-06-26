@@ -14,6 +14,7 @@ export default function SupportersPage() {
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const isAuthenticated = Boolean(team && user);
   const [submitting, setSubmitting] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -164,29 +165,6 @@ export default function SupportersPage() {
       setSubmitting(false);
     }
   };
-
-  if (contextLoading) {
-    return (
-      <AppShell>
-        <div className="space-y-4 pt-4">
-          <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-red-500 to-orange-600 p-4 text-white shadow-lg">
-            <div className="h-3 w-24 rounded-full bg-white/30 animate-pulse" />
-            <div className="mt-3 h-3 w-full rounded-full bg-white/20 animate-pulse" />
-            <div className="mt-2 h-3 w-3/4 rounded-full bg-white/20 animate-pulse" />
-          </div>
-          <div className="rounded-2xl border border-sky-100 bg-white/80 p-4 shadow-sm">
-            <div className="h-10 rounded-xl bg-sky-100 animate-pulse" />
-            <div className="mt-3 h-16 rounded-xl bg-sky-50 animate-pulse" />
-          </div>
-          <div className="space-y-2">
-            {[1,2].map((i) => (
-              <div key={i} className="h-20 rounded-2xl bg-slate-100 animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </AppShell>
-    );
-  }
 
   function timeAgo(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
