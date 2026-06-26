@@ -1,0 +1,280 @@
+CAHIER DE CHARGES - PWA SAMA ASC
+
+1. PRÉSENTATION GÉNÉRALE
+
+- Projet : application Progressive Web App (PWA) de gestion de club de football "Sama ASC".
+- Technologie : Next.js 16 (React 18), TypeScript, Tailwind CSS, Supabase.
+- Architecture : application Next.js avec pages/app router, côté client et routes API intégrées.
+- Objectif : offrir un tableau de bord pour l'équipe, match, classement, galerie, supporters, et administration.
+
+2. STRUCTURE DE L'APPLICATION
+
+2.1 Fichiers racine importants
+- package.json : dépendances du projet, scripts de développement, build et lint.
+- next.config.js : configuration Next.js (non lue mais présente dans l’arborescence).
+- tsconfig.json : configuration TypeScript.
+- app/layout.tsx : layout global qui inclut le Provider d'authentification (`UserProvider`) et le provider d'équipe (`TeamProvider`), ainsi que `SplashScreen`.
+- app/globals.css : styles globaux.
+- lib/supabase.ts : client Supabase côté client et admin, avec fonctions `createClientSupabaseClient` et `createAdminSupabaseClient`.
+- lib/auth-context.tsx : contexte utilisateur global, gestion de session Supabase, rôle utilisateur.
+- contexts/team-context.tsx : contexte d'équipe et d'utilisateur lié à la team, récupération et actualisation des données, déconnexion.
+- hooks/use-supabase-realtime.ts : hook personnalisé pour souscription temps réel sur une table Supabase.
+
+2.2 Composants partagés
+- components/app-shell.tsx : shell principal de l'interface avec header, footer `BottomNav`, et décorations visuelles.
+- components/header.tsx : bandeau fixe en haut avec logo de l'équipe, titre de page, photo utilisateur, bouton de déconnexion.
+- components/bottom-nav.tsx : barre de navigation en bas avec liens vers les pages principales.
+- components/theme-color-provider.tsx : change la couleur des métadonnées pour le thème d'équipe.
+- components/splash-screen.tsx : écran de démarrage PWA au chargement initial.
+- components/file-upload.tsx : composant de gestion de fichiers (présent dans arborescence mais non exploré en détail).
+- components/ui/* : éléments d'interface réutilisables tels que tableau, toast, input-otp, skeleton, drawer.
+
+3. CONTEXTE AUTHENTIFICATION ET ÉQUIPE
+
+3.1 `lib/auth-context.tsx`
+- Crée un client Supabase avec `@supabase/supabase-js`.
+- Stocke `user`, `userRole`, `teamId`, `loading`.
+- `refreshUserInfo` récupère la session Supabase, puis recherche l'enregistrement `team_members` correspondant à `user_id`.
+- Met à jour le rôle (`owner`, `admin`, `member`) et l'id d'équipe.
+- Abonne une fonction à `supabase.auth.onAuthStateChange` pour rafraîchir l'état utilisateur automatiquement.
+- Hook exposé : `useAuthUser()`.
+
+3.2 `contexts/team-context.tsx`
+- Utilise `createBrowserClient` de `@supabase/ssr` pour maintenir la session dans localStorage.
+- Stocke : `team`, `teamUser`, `currentUser`, `loading`, `setTeam`, `setUser`, `logout`, `refreshTeam`.
+- `refreshTeam` : récupère session Supabase et instancie `teamUser` depuis `team_members`.
+- Recherche aussi les données `teams` pour charger couleurs, logo, description et autres infos d'équipe.
+- Si `team_members` est introuvable par `user_id`, tente une recherche sur `email`, puis met à jour `user_id` si nécessaire.
+- `logout` : appelle `/api/auth/logout`, signe dehors Supabase, supprime les clés d'auth dans localStorage et redirige vers `/login`.
+- Hook exposé : `useTeam()`.
+
+4. ROUTES ET FLUX D'AUTHENTIFICATION
+
+4.1 Pages de base d'authentification
+- app/login/page.tsx : page de connexion.
+  - Formulaire email/password.
+  - Utilise Supabase Auth `signInWithPassword`.
+  - Synchronise la session en appelant `/api/auth/sync`.
+  - Gère l'installation PWA (`beforeinstallprompt`).
+  - Nettoie la session locale si déjà connecté.
+- app/register/page.tsx : création complète d'une équipe et compte administrateur.
+  - Saisit `team_name`, `domain`, `admin_email`, `admin_password`.
+  - Appelle `/api/auth/create-complete-team`.
+  - Valide le domaine de l'adresse admin.
+  - Affiche un écran de succès avec identifiants.
+- app/create-team/page.tsx : création alternative d'équipe (forme plus simple).
+  - Crée un enregistrement `teams`.
+  - Inscrit un compte admin par défaut avec email `admin@slug.com` et mot de passe `admin123`.
+  - Ajoute le compte dans `team_members`.
+- app/change-password/page.tsx : changement de mot de passe.
+  - Vérifie le mot de passe actuel via `signInWithPassword`.
+  - Met à jour le mot de passe Supabase via `supabase.auth.updateUser`.
+- app/logout/page.tsx : page de déconnexion.
+  - Appelle `/api/auth/logout` et `supabase.auth.signOut()`.
+  - Supprime le token local.
+
+4.2 Routes API auth
+- app/api/auth/sync/route.ts : synchronise la session via cookie serveur.
+  - Reçoit `access_token` et `refresh_token`.
+  - Stocke un cookie `sb-dsxpdonaziczmkzhjzdw-auth-token` avec les données de session.
+  - Cible le fonctionnement SSR de Supabase.
+- app/api/auth/logout/route.ts : efface tous les cookies Supabase d'authentification serveur.
+- app/api/auth/create-complete-team/route.ts : création complète d'équipe + utilisateur.
+  - Utilise `createServerClient` et la clé de service.
+  - Crée l'utilisateur via `supabase.auth.admin.createUser`.
+  - Crée l'équipe dans `teams`.
+  - Crée un profil dans `users` (table custom).
+  - Ajoute le créateur à `team_members` avec rôle `owner`.
+  - En cas d'erreur, cascade rollback des ressources créées.
+
+4.3 Pages manquantes / dossier vide
+- app/user-login/ existe dans l'arborescence affichée mais le dossier est vide, donc il n’y a pas de page implémentée dans le projet pour cette route.
+
+5. PAGES ET FONCTIONNALITÉS UTILISATEUR
+
+5.1 app/page.tsx — Accueil
+- Affiche un tableau de bord avec : annonces récentes, prochain match, nombre de joueurs, galerie, membres.
+- Utilise `useSupabaseRealtime` sur les tables : `announcements`, `matches`, `players`, `gallery`, `team_members`.
+- Filtre les annonces pour n’afficher que celles dont la date d’événement est future ou null.
+- Calcule `nextMatch` et `completedMatches`.
+- Nécessite `team` et `user` pour afficher, sinon redirige vers `/login` ou `/user-login`.
+
+5.2 app/supporters/page.tsx — Supporters
+- Permet aux supporters de poster un message, un sticker ou un message audio.
+- Utilise `useSupabaseRealtime` sur `supporters`.
+- Composants : sélection de sticker, enregistrement audio via MediaRecorder, prévisualisation audio.
+- Soumet au backend via `/api/admin/supporters`.
+- Trie les messages par date de création.
+- Affiche un flux de cartes de supporters avec compteurs de temps.
+
+5.3 app/galerie/page.tsx — Galerie
+- Affiche un mur de médias (images ou vidéos) filtrables par `event_type`.
+- Utilise `useSupabaseRealtime` sur `gallery`.
+- Permet la visualisation en lightbox et le téléchargement du média.
+- Gère les URLs Base64 et les liens distants.
+
+5.4 app/equipe/page.tsx — Mon Équipe
+- Affiche la liste des joueurs, coach, statistiques, matches, compositions.
+- Utilise `useSupabaseRealtime` pour tables : `players`, `coach`, `player_stats`, `matches`, `match_lineup`, `competitions`.
+- Permet plusieurs vues : terrain, liste, stats.
+- Génère la composition de l'équipe en fonction du match sélectionné et du lineup.
+- Calcule `topScorers`, `topAssisters`, et agrège les statistiques.
+
+5.5 app/classement/page.tsx — Classement
+- Affiche le classement pour une compétition sélectionnée.
+- Utilise `useSupabaseRealtime` sur `standings` et `competitions`.
+- Montre les points, victoire, nul, défaite, but pour/contre.
+- Met en avant l'équipe locale si présente.
+
+5.6 app/resultats/page.tsx — Résultats
+- Affiche les matchs terminés et gère le vote du meilleur joueur (`man of the match`).
+- Charge via `fetchWithCache` les API data suivantes : `matches`, `players`, `match-votes`, `competitions`.
+- Permet de voter pour un joueur dans un match terminé.
+- Empêche double vote par `voter_name` (email) pour un même match.
+- Affiche les tops voteurs et un compte à rebours selon `vote_end_time`.
+
+5.7 app/profil/page.tsx — Profil personnel
+- Permet à l’utilisateur de voir et modifier son nom complet et sa photo.
+- Utilise `/api/user/profile` pour mettre à jour `team_members`.
+- Upload de photo en Base64 pour l’insertion dans l’enregistrement.
+- Recharge les données via `refreshTeam`.
+
+5.8 app/parametres/page.tsx — Paramètres équipe
+- Accessible aux administrateurs seulement (`userRole` doit être `admin`).
+- Permet de modifier : nom de l’équipe, slug, description, couleurs, logo, photo d’équipe.
+- Uploads de fichiers gérés en Base64 et stockés dans les colonnes `logo_url`, `team_photo_url`, `profile_photo_url`.
+- Utilise `/api/admin/profile-photo` et `/api/admin/team`.
+- Valide l'accès admin et redirige si l’utilisateur n’a pas les droits.
+
+6. ADMINISTRATION ET PAGES ADMIN
+
+6.1 app/admin/page.tsx — Tableau de bord admin
+- Interface centralisée avec plusieurs onglets : coach, joueurs, match, lineup, annonces, standings, stats, galerie, compétitions, utilisateurs, paramètres.
+- Charge dynamiquement les données via API `/api/data/...`.
+- Autorise uniquement les administrateurs.
+- Gère ajout, modification et suppression d'entrées via API admin.
+- Composants de formulaire pour création et édition de joueurs, matchs, annonces, standings, statuts, galerie, etc.
+- Gère la composition (`lineup`) et la formation de départ.
+- Gère `users` et la création/suppression d'utilisateurs Supabase.
+
+6.2 Routes API admin
+- `app/api/admin/announcements/route.ts` : POST, PUT, DELETE annonces.
+- `app/api/admin/coach/route.ts` : POST, PUT coach.
+- `app/api/admin/competitions/route.ts` : POST, PUT, DELETE compétitions.
+- `app/api/admin/create-user/route.ts` : création d'utilisateur Supabase + insertion `team_members`.
+- `app/api/admin/gallery/route.ts` : POST, PUT, DELETE médias de galerie.
+- `app/api/admin/matches/route.ts` : POST, PUT, DELETE matchs.
+- `app/api/admin/players/route.ts` : POST, PUT, DELETE joueurs.
+- `app/api/admin/standings/route.ts` : POST, PUT, DELETE standings.
+- `app/api/admin/stats/route.ts` : POST, PUT, DELETE statistiques de joueurs.
+- `app/api/admin/supporters/route.ts` : POST messages supporters.
+- `app/api/admin/team/route.ts` : PUT mise à jour équipe.
+- `app/api/admin/profile-photo/route.ts` : POST mise à jour photo de profil.
+- `app/api/admin/team-members/route.ts` : GET membres d’équipe.
+- `app/api/admin/users/route.ts` : POST création d’utilisateur, DELETE suppression d’utilisateur.
+- `app/api/admin/verify-schema/route.ts` : GET/POST vérification du schéma.
+
+7. ROUTES API DE DONNÉES
+
+- `app/api/data/announcements/route.ts` : GET annonces par team_id.
+- `app/api/data/coach/route.ts` : GET coach par team_id.
+- `app/api/data/competitions/route.ts` : GET compétitions par team_id.
+- `app/api/data/gallery/route.ts` : GET galerie par team_id.
+- `app/api/data/match-lineup/route.ts` : GET compositions par team_id.
+- `app/api/data/match-votes/route.ts` : GET votes par team_id.
+- `app/api/data/matches/route.ts` : GET matchs par team_id.
+- `app/api/data/player-stats/route.ts` : GET stats par team_id.
+- `app/api/data/players/route.ts` : GET joueurs par team_id.
+- `app/api/data/standings/route.ts` : GET standings par team_id.
+- `app/api/data/supporters/route.ts` : GET supporters par team_id.
+- `app/api/data/users/route.ts` : GET utilisateurs par team_id.
+
+8. BASE DE DONNÉES SUPABASE
+
+8.1 Schéma principal (migrations/001_complete_schema.sql)
+- tables `teams`, `team_members`, `players`, `matches`, `match_lineup`, `announcements`, `gallery`, `standings`, `supporters`, `custom_stickers`, `coach`, `player_stats`, `competitions`.
+- Clés primaires UUID pour toutes les tables.
+- Relations :
+  - `team_members.team_id` -> `teams.id`
+  - `players.team_id` -> `teams.id`
+  - `matches.team_id` -> `teams.id`
+  - `match_lineup.match_id` -> `matches.id`
+  - `match_lineup.player_id` -> `players.id`
+  - `announcements.team_id` -> `teams.id`
+  - `gallery.team_id` -> `teams.id`
+  - `standings.team_id` -> `teams.id`
+  - `supporters.team_id` -> `teams.id`
+  - `custom_stickers.team_id` -> `teams.id`
+  - `coach.team_id` -> `teams.id`
+  - `player_stats.player_id` -> `players.id`
+  - `player_stats.team_id` -> `teams.id`
+  - `competitions.team_id` -> `teams.id`
+- Indexes de performance sur `team_id`, `status`, `competition_name`, `user_id`, etc.
+- RLS : le schéma active la sécurité au niveau des lignes (migrations supplémentaires présentes). Voir `supabase/migrations/*.sql`.
+
+8.2 Types partagés
+- `lib/types.ts` définit les interfaces pour tous les objets métier : `User`, `Coach`, `Player`, `Match`, `MatchLineup`, `Announcement`, `Standing`, `GalleryItem`, `MatchVote`, `Supporter`, `PlayerStat`, `Competition`.
+
+9. FLUX D'UTILISATION
+
+9.1 Inscription / création d'équipe
+- L'utilisateur accède à `/register` ou `/create-team`.
+- `register` appelle `/api/auth/create-complete-team`.
+- Création d’un compte Supabase, d’une équipe, d’un profil `users`, et d’un membre `team_members`.
+- Retour automatique vers `/login`.
+
+9.2 Connexion
+- L’utilisateur saisit email et mot de passe sur `/login`.
+- `supabase.auth.signInWithPassword` authentifie.
+- `supabase.auth.refreshSession()` et appel `/api/auth/sync` synchronisent les cookies et la session.
+- `TeamProvider.refreshTeam()` charge l’équipe et le membre via `team_members`.
+- Si pas de `team` ou `user`, redirection vers `/login` ou `/user-login`.
+
+9.3 Déconnexion
+- Appui sur le bouton déconnexion du `Header`.
+- Redirection vers `/logout` qui appelle `/api/auth/logout`.
+- Supprime cookies serveur et tokens localStorage.
+- Redirige vers `/login`.
+
+9.4 Navigation
+- L’application utilise `AppShell` pour afficher le header fixe et `BottomNav`.
+- `Header` affiche le titre de la page, le logo d’équipe, la photo utilisateur, et le bouton déconnexion.
+- `BottomNav` fournit les liens de navigation entre les écrans.
+- Les pages principales vérifient le contexte `team`/`user` et redirigent si nécessaire.
+
+10. SYSTÈME TEMPS RÉEL
+
+- `useSupabaseRealtime` se connecte à Supabase Realtime sur une table spécifique.
+- Charge d’abord les données | met en place un canal Realtime.
+- Gère INSERT, UPDATE, DELETE.
+- Utilise un filtre `team_id` pour isoler les données de l’équipe.
+- Utilisé par : `app/page.tsx`, `app/supporters/page.tsx`, `app/galerie/page.tsx`, `app/equipe/page.tsx`, `app/classement/page.tsx`, d'autres pages.
+
+11. COMPOSANTS D'UI SPÉCIFIQUES
+
+- `components/file-upload.tsx` : composant de drag/drop ou sélection de fichier.
+- `components/splash-screen.tsx` : écran d’attente initial.
+- `components/theme-color-provider.tsx` : propose les couleurs de thème via `team`.
+- `components/ui/table.tsx`, `toast.tsx`, `drawer.tsx`, etc. : aide à l’interface.
+
+12. DÉPENDANCES SPÉCIFIQUES
+
+- `@supabase/supabase-js` pour l’accès aux données.
+- `@supabase/ssr` pour la synchronisation de la session côté client/serveur.
+- `@supabase/auth-helpers-nextjs` et react pour l’intégration Auth.
+- `next-pwa`, `manifest.json`, `sw.js`, `workbox-*.js` pour le comportement PWA.
+- `lucide-react` pour les icônes.
+- `tailwindcss`, `tailwind-merge`, `clsx` pour le style.
+- `swr` et `react-resizable-panels` pour la gestion des données et layout.
+
+13. REMARQUES TECHNIQUES IMPORTANTES
+
+- Certaines pages utilisent encore des uploads de fichiers en Base64 plutôt que Supabase Storage.
+- `app/user-login` est présent dans l’arborescence mais vide, ce qui peut créer un lien cassé si la route est utilisée.
+- Le backend admin utilise la clé de service Supabase pour créer des utilisateurs et modifier des tables sensibles.
+- Les cookies de session Supabase sont gérés manuellement dans `/api/auth/sync` et `/api/auth/logout`.
+
+14. FICHIER CRÉÉ
+- `cahier de charge.txt` : document de spécification fonctionnelle détaillée.
+
+FIN DU CAHIER DE CHARGES

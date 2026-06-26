@@ -153,10 +153,18 @@ export default function GaleriePage() {
         {/* Gallery Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {filtered.map((item) => (
-            <button
+            <div
               key={item.id}
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedItem(item)}
-              className="relative aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group"
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setSelectedItem(item);
+                }
+              }}
+              className="relative aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group cursor-pointer"
               style={{
                 boxShadow: team?.primary_color ? `0 4px 30px -4px ${team.primary_color}60` : undefined
               }}
@@ -184,10 +192,23 @@ export default function GaleriePage() {
               <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <p className="text-white text-xs font-medium truncate">{item.caption}</p>
               </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    downloadMedia(item.url, item.type);
+                  }}
+                  className="rounded-full bg-black/60 p-2 text-white shadow-lg transition hover:bg-black/80"
+                  aria-label="Télécharger le média"
+                >
+                  <Download size={16} />
+                </button>
+              </div>
+              <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <ZoomIn size={16} className="text-white drop-shadow" />
               </div>
-            </button>
+            </div>
           ))}
         </div>
 

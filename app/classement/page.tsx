@@ -192,8 +192,8 @@ export default function ClassementPage() {
           }}>
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#0ea5e9]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#0284c7]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-            <div className="relative z-10 overflow-x-auto">
-              <div className="grid grid-cols-[32px_1fr_32px_32px_32px_32px_32px_40px] gap-1 px-3 py-2.5 bg-white/20 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider min-w-[500px]">
+            <div className="relative z-10">
+              <div className="grid grid-cols-[24px_minmax(0,1fr)_34px_30px_30px_30px_38px_34px] gap-1 px-3 py-2.5 bg-white/20 backdrop-blur-sm text-[9px] sm:text-[10px] font-bold text-white uppercase tracking-wider">
                 <div>#</div>
                 <div>Équipe</div>
                 <div>J</div>
@@ -209,7 +209,7 @@ export default function ClassementPage() {
                 return (
                   <div
                     key={standing.id}
-                    className={`grid grid-cols-[32px_1fr_32px_32px_32px_32px_32px_40px] gap-1 px-3 py-2.5 text-xs items-center transition-colors duration-200 min-w-[500px] ${
+                    className={`grid grid-cols-[24px_minmax(0,1fr)_34px_30px_30px_30px_38px_34px] gap-1 px-3 py-2.5 text-[11px] sm:text-xs items-center transition-colors duration-200 ${
                       isUs
                       ? 'bg-white/30 backdrop-blur-sm border-l-2 border-white'
                       : idx % 2 === 0
@@ -220,7 +220,7 @@ export default function ClassementPage() {
                     <div className={`font-bold ${isUs ? 'text-white' : 'text-white/80'}`}>
                       {standing.position}
                     </div>
-                    <div className={`font-semibold truncate ${isUs ? 'text-white' : 'text-white/90'}`}>
+                    <div className={`font-semibold truncate min-w-0 ${isUs ? 'text-white' : 'text-white/90'}`}>
                       {standing.team_name}
                     </div>
                     <div className="text-white/70 text-center">{standing.played}</div>
