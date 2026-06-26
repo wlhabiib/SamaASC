@@ -12,7 +12,7 @@ export default function SupportersPage() {
   const router = useRouter();
   const { team, user, loading: contextLoading } = useTeam();
   const [supporters, setSupporters] = useState<Supporter[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export default function SupportersPage() {
   useEffect(() => {
     if (!realtimeLoading) {
       // Sort by created_at descending (most recent first)
-      const sortedSupporters = [...realtimeSupporters].sort((a, b) => 
+      const sortedSupporters = [...(realtimeSupporters || [])].sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
       setSupporters(sortedSupporters);
@@ -165,7 +165,7 @@ export default function SupportersPage() {
     }
   };
 
-  if (loading || contextLoading) {
+  if (contextLoading) {
     return (
       <AppShell>
         <div className="space-y-4 pt-4">
