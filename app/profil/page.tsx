@@ -8,7 +8,7 @@ import { User as UserIcon, Upload, Save, Check } from 'lucide-react';
 
 export default function ProfilPage() {
   const router = useRouter();
-  const { team, user, loading: contextLoading, refreshTeam } = useTeam();
+  const { team, user, loading: contextLoading, refreshTeam, setUser } = useTeam();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -60,17 +60,26 @@ export default function ProfilPage() {
     try {
       let profilePhotoUrl = user.profile_photo_url || null;
 
-      // Upload profile photo if changed using Base64
       if (profilePhotoFile) {
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(profilePhotoFile);
+        const formData = new FormData();
+        formData.append('file', profilePhotoFile);
+        formData.append('team_id', team.id);
+        formData.append('type', 'team');
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
         });
-        profilePhotoUrl = await base64Promise;
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Upload failed');
+        }
+
+        const data = await response.json();
+        profilePhotoUrl = data.url;
       }
 
-      // Update profile photo via API
       if (profilePhotoUrl !== user.profile_photo_url) {
         const photoResponse = await fetch('/api/admin/profile-photo', {
           method: 'POST',
@@ -88,7 +97,6 @@ export default function ProfilPage() {
         }
       }
 
-      // Update user name via API route
       const nameParts = name.trim().split(' ');
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
@@ -110,14 +118,20 @@ export default function ProfilPage() {
         throw new Error(responseData.error || `HTTP ${response.status}: Failed to update profile`);
       }
 
+      const updatedUser = {
+        ...user,
+        first_name: firstName,
+        last_name: lastName,
+        profile_photo_url: profilePhotoUrl,
+      };
+      setUser(updatedUser);
+
       if (refreshTeam) {
         await refreshTeam(true);
       }
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-
-      // Keep the saved profile photo visible while the context updates
       setProfilePhotoFile(null);
       setProfilePhotoPreview(profilePhotoUrl);
     } catch (error) {

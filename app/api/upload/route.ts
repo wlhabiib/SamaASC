@@ -24,11 +24,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing file or team_id' }, { status: 400 });
     }
 
-    // Check file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 });
-    }
-
     // Determine bucket based on type
     const bucketName = type === 'team' ? TEAM_BUCKET_NAME : BUCKET_NAME;
 
@@ -50,8 +45,7 @@ export async function POST(request: NextRequest) {
       // Try to create bucket if it doesn't exist
       if (error.message.includes('Bucket not found')) {
         const { error: createError } = await supabase.storage.createBucket(bucketName, {
-          public: true,
-          fileSizeLimit: 10485760 // 10MB
+          public: true
         });
 
         if (createError) {

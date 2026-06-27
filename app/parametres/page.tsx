@@ -9,7 +9,7 @@ import { Palette, Upload, Save, X, Check, ShieldAlert } from 'lucide-react';
 
 export default function ParametresPage() {
   const router = useRouter();
-  const { team, user, loading: contextLoading, refreshTeam } = useTeam();
+  const { team, user, loading: contextLoading, refreshTeam, setTeam, setUser } = useTeam();
   const { userRole, loading: userLoading } = useAuthUser();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -135,62 +135,38 @@ export default function ParametresPage() {
       let teamPhotoUrl = team.team_photo_url;
       let profilePhotoUrl = user?.profile_photo_url || null;
 
-      // Upload profile photo if changed
-      if (profilePhotoFile) {
-        // Convert file to base64 for storage (since Supabase storage is disabled)
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(profilePhotoFile);
+      const uploadFile = async (file: File, type: 'team' | 'gallery') => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('team_id', team.id);
+        formData.append('type', type);
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
         });
-        profilePhotoUrl = await base64Promise;
+
+        if (!response.ok) {
+          const uploadError = await response.json();
+          throw new Error(uploadError.error || 'Failed to upload file');
+        }
+
+        const data = await response.json();
+        return data.url as string;
+      };
+
+      if (logoFile) {
+        logoUrl = await uploadFile(logoFile, 'team');
       }
 
-      // Upload logo if changed - DISABLED (Supabase removed)
-      // if (logoFile && supabase) {
-      //   const fileExt = logoFile.name.split('.').pop();
-      //   const fileName = `${team.id}-${Date.now()}.${fileExt}`;
-      //   const filePath = `team-logos/${fileName}`;
+      if (teamPhotoFile) {
+        teamPhotoUrl = await uploadFile(teamPhotoFile, 'team');
+      }
 
-      //   const { error: uploadError } = await supabase.storage
-      //     .from('team-assets')
-      //     .upload(filePath, logoFile);
+      if (profilePhotoFile) {
+        profilePhotoUrl = await uploadFile(profilePhotoFile, 'team');
+      }
 
-      //   if (uploadError) throw uploadError;
-
-      //   const { data: { publicUrl } } = supabase.storage
-      //     .from('team-assets')
-      //     .getPublicUrl(filePath);
-
-      //   logoUrl = publicUrl;
-      // }
-      
-      // Keep existing logo since upload is disabled
-      logoUrl = team.logo_url;
-
-      // Upload team photo if changed - DISABLED (Supabase removed)
-      // if (teamPhotoFile && supabase) {
-      //   const fileExt = teamPhotoFile.name.split('.').pop();
-      //   const fileName = `${team.id}-photo-${Date.now()}.${fileExt}`;
-      //   const filePath = `team-photos/${fileName}`;
-
-      //   const { error: uploadError } = await supabase.storage
-      //     .from('team-assets')
-      //     .upload(filePath, teamPhotoFile);
-
-      //   if (uploadError) throw uploadError;
-
-      //   const { data: { publicUrl } } = supabase.storage
-      //     .from('team-assets')
-      //     .getPublicUrl(filePath);
-
-      //   teamPhotoUrl = publicUrl;
-      // }
-      
-      // Keep existing team photo since upload is disabled
-      teamPhotoUrl = team.team_photo_url;
-
-      // Update profile photo via API
       if (profilePhotoUrl !== user?.profile_photo_url && user) {
         const photoResponse = await fetch('/api/admin/profile-photo', {
           method: 'POST',
@@ -208,7 +184,6 @@ export default function ParametresPage() {
         }
       }
 
-      // Update team via API route
       const response = await fetch('/api/admin/team', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -231,30 +206,40 @@ export default function ParametresPage() {
         throw new Error(error.error || 'Failed to update team');
       }
 
+      const updatedTeam = {
+        ...team,
+        name,
+        slug,
+        description,
+        primary_color: primaryColor,
+        secondary_color: secondaryColor,
+        accent_color: primaryColor,
+        nav_color: primaryColor,
+        logo_url: logoUrl,
+        team_photo_url: teamPhotoUrl,
+      };
+
+      setTeam(updatedTeam);
+
+      if (user) {
+        setUser({
+          ...user,
+          profile_photo_url: profilePhotoUrl,
+        });
+      }
+
       if (refreshTeam) {
         await refreshTeam(true);
       }
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+      setLogoFile(null);
+      setTeamPhotoFile(null);
       setProfilePhotoFile(null);
+      setLogoPreview(logoUrl);
+      setTeamPhotoPreview(teamPhotoUrl);
       setProfilePhotoPreview(profilePhotoUrl);
-
-      // Update team context with new data
-      if (team) {
-        const updatedTeam = {
-          ...team,
-          name,
-          slug,
-          description,
-          primary_color: primaryColor,
-          secondary_color: secondaryColor,
-          accent_color: primaryColor,
-          nav_color: primaryColor,
-          logo_url: logoUrl,
-          team_photo_url: teamPhotoUrl,
-        };
-      }
     } catch (error) {
       console.error('Error saving team settings:', error);
       alert('Erreur lors de la sauvegarde: ' + (error as Error).message);

@@ -18,7 +18,7 @@ export default function FileUpload({
   onChange,
   onTypeChange,
   accept = 'image/*,video/*',
-  maxSize = 10,
+  maxSize,
   label = 'Image',
   teamId
 }: FileUploadProps) {
@@ -32,15 +32,8 @@ export default function FileUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Determine file type first to check appropriate size limit
+    // Determine file type for preview and upload metadata
     const isVideo = file.type.startsWith('video/');
-    const actualMaxSize = isVideo ? 10 : maxSize; // 10MB for videos, 2MB for images
-
-    // Check file size
-    if (file.size > actualMaxSize * 1024 * 1024) {
-      setError(`Fichier trop volumineux (max ${actualMaxSize}MB)`);
-      return;
-    }
 
     setError('');
     setUploading(true);
@@ -158,7 +151,7 @@ export default function FileUpload({
               <>
                 <Upload size={24} className="text-gray-400" />
                 <span className="text-sm text-gray-500">Cliquez pour uploader</span>
-                <span className="text-xs text-gray-400">Max {maxSize}MB</span>
+                <span className="text-xs text-gray-400">{maxSize ? `Max ${maxSize}MB` : 'Aucune limite'}</span>
               </>
             )}
           </button>
