@@ -53,6 +53,28 @@ export default function SupportersPage() {
     team ? { column: 'team_id', value: team.id } : undefined
   );
 
+  const loadSupporters = async () => {
+    if (!team?.id) return;
+
+    try {
+      const response = await fetch(`/api/data/supporters?team_id=${team.id}`);
+      if (!response.ok) {
+        throw new Error('Erreur de chargement des messages de soutien');
+      }
+
+      const data: Supporter[] = await response.json();
+      const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const validSupporters = data.filter((supporter) => new Date(supporter.created_at) >= cutoffDate);
+      const sortedSupporters = [...validSupporters].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setSupporters(sortedSupporters);
+    } catch (error) {
+      console.error('Error loading supporters:', error);
+    }
+  };
+
   useEffect(() => {
     if (!realtimeLoading) {
       const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -68,6 +90,14 @@ export default function SupportersPage() {
       setLoading(false);
     }
   }, [realtimeSupporters, realtimeLoading]);
+
+  useEffect(() => {
+    if (!team?.id) return;
+    loadSupporters();
+
+    const intervalId = window.setInterval(loadSupporters, 3000);
+    return () => window.clearInterval(intervalId);
+  }, [team?.id]);
 
   const startRecording = async () => {
     try {
