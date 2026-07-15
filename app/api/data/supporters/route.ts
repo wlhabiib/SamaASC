@@ -21,10 +21,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing team_id' }, { status: 400 });
     }
 
+    const expiryDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: deleteError } = await supabase
+      .from('supporters')
+      .delete()
+      .eq('team_id', team_id)
+      .lt('created_at', expiryDate);
+
+    if (deleteError) {
+      console.error('Error deleting expired supporters:', deleteError);
+      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+    }
+
     const { data, error } = await supabase
       .from('supporters')
       .select('id, name, message, profile_photo_url, message_type, voice_url, sticker_url, created_at')
       .eq('team_id', team_id)
+      .gte('created_at', expiryDate)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 

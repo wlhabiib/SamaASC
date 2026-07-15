@@ -9,6 +9,7 @@ import { Announcement, Match, Player, GalleryItem, User } from '@/lib/types';
 import AppShell from '@/components/app-shell';
 import { useTeam } from '@/contexts/team-context';
 import { useSupabaseRealtime } from '@/hooks/use-supabase-realtime';
+import { fetchWithCache } from '@/utils/cache';
 import { Calendar, MapPin, Clock, Trophy, Users, Image, ChevronRight, Home } from 'lucide-react';
 
 const TYPE_CONFIG: Record<string, { icon: typeof Calendar; color: string; bg: string; label: string }> = {
@@ -82,10 +83,30 @@ export default function AccueilPage() {
     team ? { column: 'team_id', value: team.id } : undefined
   );
 
-  const { data: realtimeUsers, loading: usersLoading } = useSupabaseRealtime<User>(
-    'team_members',
-    team ? { column: 'team_id', value: team.id } : undefined
-  );
+  const [memberLoading, setMemberLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMemberCount = async () => {
+      if (!team?.id) {
+        setUserCount(0);
+        setMemberLoading(false);
+        return;
+      }
+
+      try {
+        setMemberLoading(true);
+        const data = await fetchWithCache<any[]>(`/api/data/users?team_id=${team.id}`, `users_${team.id}`);
+        setUserCount(Array.isArray(data) ? data.length : 0);
+      } catch (error) {
+        console.error('Error fetching member count:', error);
+        setUserCount(0);
+      } finally {
+        setMemberLoading(false);
+      }
+    };
+
+    fetchMemberCount();
+  }, [team?.id]);
 
   // Update state when realtime data changes
   useEffect(() => {
@@ -118,12 +139,6 @@ export default function AccueilPage() {
       setGalleryCount(realtimeGallery.length);
     }
   }, [realtimeGallery, galleryLoading]);
-
-  useEffect(() => {
-    if (!usersLoading && realtimeUsers) {
-      setUserCount(realtimeUsers.length);
-    }
-  }, [realtimeUsers, usersLoading]);
 
   useEffect(() => {
     if (!announcementsLoading && !matchesLoading && !playersLoading) {

@@ -55,10 +55,15 @@ export default function SupportersPage() {
 
   useEffect(() => {
     if (!realtimeLoading) {
-      // Sort by created_at descending (most recent first)
-      const sortedSupporters = [...(realtimeSupporters || [])].sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const validSupporters = (realtimeSupporters || []).filter((supporter) => {
+        return new Date(supporter.created_at) >= cutoffDate;
+      });
+
+      const sortedSupporters = [...validSupporters].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
+
       setSupporters(sortedSupporters);
       setLoading(false);
     }
